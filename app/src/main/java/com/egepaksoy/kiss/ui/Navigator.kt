@@ -4,13 +4,11 @@ import androidx.compose.runtime.mutableStateListOf
 
 sealed interface Screen {
     data object Home : Screen
-    data object Dialer : Screen
-    data object Messages : Screen
+    /** Arama ve SMS tek sayfada. tab: PhoneTab sırası, -1 = otomatik (okunmamış varsa Mesajlar). */
+    data class Phone(val tab: Int = -1) : Screen
+    data object AppsList : Screen
     data object NewMessage : Screen
     data class Thread(val threadId: Long?, val address: String) : Screen
-    data object Camera : Screen
-    data object Gallery : Screen
-    data class Photo(val index: Int) : Screen
     data object Calculator : Screen
     data object Gate : Screen
     data object Settings : Screen

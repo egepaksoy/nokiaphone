@@ -62,6 +62,8 @@ Modüller: `launcher`, `phone`, `sms`, `camera`, `gallery`, `apps`, `settings`, 
 - [x] v0.2: Mesajlar'da SMS / WhatsApp seçimi (mesaj uygulamaları ayarlanabilir)
 - [x] v0.2: Saate dokununca Saat uygulaması; sıradaki alarm tarihin yanında
 - [x] v0.2: Boş alana çift dokunarak ekran kilidi
-- [ ] Video çekimi
+- [x] v0.3: Ana ekran sadece saat, Telefon ve Uygulamalar
+- [x] v0.3: Arama ve SMS tek "Telefon" sayfasında (Tuşlar, Son, Mesajlar, Kişiler)
+- [x] v0.3: Kamera ve galeri telefonun kendi uygulamalarını açar (yerleşik kamera/galeri kaldırıldı)
 - [ ] Varsayılan SMS uygulaması olma (MMS dahil)
 - [ ] Gerçek cihazda Samsung testleri

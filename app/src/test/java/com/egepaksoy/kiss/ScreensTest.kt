@@ -12,8 +12,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.egepaksoy.kiss.data.Pin
 import com.egepaksoy.kiss.ui.Screen
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,7 +30,7 @@ class ScreensTest {
         val app = ApplicationProvider.getApplicationContext<KissApp>()
         shadowOf(app).grantPermissions(
             Manifest.permission.READ_CONTACTS, Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_SMS,
-            Manifest.permission.SEND_SMS, Manifest.permission.CALL_PHONE, Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.SEND_SMS, Manifest.permission.CALL_PHONE,
         )
         listOf("com.example.maps" to "Haritalar", "com.example.bank" to "Banka", "com.example.keep" to "Keep", "com.whatsapp" to "WhatsApp").forEach { (pkg, label) ->
             val ai = ApplicationInfo().apply { packageName = pkg; nonLocalizedLabel = label; name = label }
@@ -74,18 +72,15 @@ class ScreensTest {
 
     @Test fun screens() {
         shot("01-home")
-        rule.onNodeWithText("Mesajlar").performClick(); shot("01b-home-messages")
-        go(Screen.Dialer); shot("02-dialer")
-        go(Screen.Messages); shot("03-messages")
-        go(Screen.Thread(null, "+905321234567")); shot("04-thread")
-        go(Screen.Gallery); shot("05-gallery")
-        go(Screen.Calculator); shot("06-calculator")
-        go(Screen.Gate); shot("07-gate")
-        go(Screen.Settings); shot("08-settings")
-        go(Screen.AppPicker(com.egepaksoy.kiss.ui.PickerMode.Messaging)); shot("09-apps")
-        go(Screen.Strict); shot("10-strict")
-        go(Screen.ChangePin); shot("11-pin")
-        rule.runOnUiThread { KissApp.instance.settings.update { it.copy(camera = false, gallery = false, torch = false) } }
-        go(Screen.Home); shot("12-home-minimal")
+        go(Screen.AppsList); shot("02-apps")
+        go(Screen.Phone(0)); shot("03-phone-keys")
+        go(Screen.Phone(1)); shot("04-phone-recent")
+        go(Screen.Phone(2)); shot("05-phone-messages")
+        go(Screen.Phone(3)); shot("06-phone-contacts")
+        go(Screen.Thread(null, "+905321234567")); shot("07-thread")
+        go(Screen.Calculator); shot("08-calculator")
+        go(Screen.Gate); shot("09-gate")
+        go(Screen.Settings); shot("10-settings")
+        go(Screen.Strict); shot("11-strict")
     }
 }

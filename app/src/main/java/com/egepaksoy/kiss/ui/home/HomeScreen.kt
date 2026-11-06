@@ -1,14 +1,9 @@
 package com.egepaksoy.kiss.ui.home
 
 import android.app.Activity
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.ui.input.pointer.pointerInput
-import com.egepaksoy.kiss.lock.ScreenLock
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,14 +11,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
@@ -44,11 +38,10 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.egepaksoy.kiss.KissApp
 import com.egepaksoy.kiss.data.Alarm
-import com.egepaksoy.kiss.data.Apps
 import com.egepaksoy.kiss.data.KissSettings
 import com.egepaksoy.kiss.data.Sms
+import com.egepaksoy.kiss.lock.ScreenLock
 import com.egepaksoy.kiss.ui.Navigator
-import com.egepaksoy.kiss.ui.PickerMode
 import com.egepaksoy.kiss.ui.Screen
 import com.egepaksoy.kiss.ui.common.KIcons
 import com.egepaksoy.kiss.ui.common.RoundBtn
@@ -61,6 +54,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** Ana ekran: saat, Telefon, Uygulamalar. Başka hiçbir şey. */
 @Composable
 fun HomeScreen(s: KissSettings, nav: Navigator) {
     val ctx = LocalContext.current
@@ -81,14 +75,6 @@ fun HomeScreen(s: KissSettings, nav: Navigator) {
         Sms.changes(ctx).collect { value = withContext(Dispatchers.IO) { Sms.unreadCount(ctx) } }
     }
     val nextAlarm = remember(tick, now.minute) { if (s.alarm) Alarm.next(ctx) else null }
-    val apps by produceState(emptyList(), s.allowedApps, s.messagingApps, tick) {
-        value = withContext(Dispatchers.IO) { Apps.entries(ctx, s.allowedApps - s.messagingApps) }
-    }
-    val messengers by produceState(emptyList(), s.messagingApps, tick) {
-        value = withContext(Dispatchers.IO) { Apps.entries(ctx, s.messagingApps) }
-    }
-    var messagesOpen by remember { mutableStateOf(false) }
-    LaunchedEffect(tick) { messagesOpen = false }
 
     Column(
         Modifier.fillMaxSize()
@@ -124,37 +110,10 @@ fun HomeScreen(s: KissSettings, nav: Navigator) {
             }
         }
 
-        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = 36.dp)) {
-            HomeItem("Ara") { nav.push(Screen.Dialer) }
-            HomeItem("Mesajlar", badge = unread) {
-                if (messengers.isEmpty()) nav.push(Screen.Messages) else messagesOpen = !messagesOpen
-            }
-            AnimatedVisibility(messagesOpen && messengers.isNotEmpty()) {
-                Column(Modifier.padding(start = 18.dp, bottom = 6.dp)) {
-                    HomeItem("SMS", badge = unread, size = 22.sp) { messagesOpen = false; nav.push(Screen.Messages) }
-                    messengers.forEach { m ->
-                        HomeItem(m.label, size = 22.sp) { messagesOpen = false; Apps.launch(ctx, m.pkg) }
-                    }
-                }
-            }
-            if (s.camera) HomeItem("Kamera") { nav.push(Screen.Camera) }
-            if (s.gallery) HomeItem("Galeri") { nav.push(Screen.Gallery) }
-            if (s.notes) HomeItem("Notlar") {
-                val pkg = s.notesPackage
-                if (pkg != null) Apps.launch(ctx, pkg) else nav.push(Screen.AppPicker(PickerMode.Notes))
-            }
-            if (s.calculator) HomeItem("Hesap makinesi") { nav.push(Screen.Calculator) }
-
-            if (apps.isNotEmpty()) {
-                Row(Modifier.padding(top = 22.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("UYGULAMALAR", fontSize = 11.sp, letterSpacing = 1.2.sp, color = c.muted, fontWeight = FontWeight.Medium)
-                    Spacer(Modifier.width(10.dp))
-                    Box(Modifier.weight(1f).height(1.dp).background(c.line))
-                }
-                apps.forEach { a -> HomeItem(a.label, size = 22.sp) { Apps.launch(ctx, a.pkg) } }
-            }
-            Spacer(Modifier.height(12.dp))
-        }
+        Spacer(Modifier.weight(1f))
+        BigItem("Telefon", badge = unread) { nav.push(Screen.Phone()) }
+        BigItem("Uygulamalar") { nav.push(Screen.AppsList) }
+        Spacer(Modifier.weight(0.35f))
 
         Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (s.torch && app.torch.available) {
@@ -170,20 +129,18 @@ fun HomeScreen(s: KissSettings, nav: Navigator) {
 }
 
 @Composable
-private fun HomeItem(label: String, badge: Int = 0, sub: String? = null, size: TextUnit = 32.sp, onClick: () -> Unit) {
+fun BigItem(label: String, badge: Int = 0, size: TextUnit = 40.sp, onClick: () -> Unit) {
     val c = Kiss.colors
     Row(
-        Modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick).padding(vertical = 7.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick).padding(vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(label, fontFamily = Display, fontWeight = FontWeight.Medium, fontSize = size, lineHeight = size, letterSpacing = (-0.02).em)
+        Text(label, fontFamily = Display, fontWeight = FontWeight.Medium, fontSize = size, lineHeight = size, letterSpacing = (-0.025).em)
         if (badge > 0) {
-            Box(Modifier.clip(CircleShape).background(c.accent).padding(horizontal = 9.dp, vertical = 2.dp)) {
-                Text(badge.toString(), color = c.onAccent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Box(Modifier.clip(CircleShape).background(c.accent).padding(horizontal = 10.dp, vertical = 2.dp)) {
+                Text(badge.toString(), color = c.onAccent, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
         }
-        if (sub != null) Text(sub, color = c.muted, fontSize = 15.sp)
     }
 }

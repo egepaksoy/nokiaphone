@@ -2,7 +2,8 @@
 
 Akıllı telefonu yalnızca arama, SMS ve seçtiğin birkaç özellikle sınırlayan, sade bir Android ana ekranı.
 
-- **Yerleşik:** Arama, Mesajlar, Kamera, Galeri, Hesap makinesi, Fener, Alarm, Notlar (seçtiğin not uygulamasını açar)
+- **Ana ekran:** saat, Telefon (arama + SMS) ve Uygulamalar. Saate dokun: alarmlar. Boş yere çift dokun: kilit.
+- **Uygulamalar:** Kamera ve Galeri (telefonun kendi uygulamaları), Hesap makinesi, Notlar (seçtiğin uygulama), eklediğin uygulamalar
 - **İzin listesi:** İstediğin uygulamaları ana ekrana ekle
 - **Ayar kilidi:** Bekleme süresi + 4 haneli PIN
 - **Sıkı mod:** Cihaz sahibi (Device Owner) + kiosk modu; izin listesi dışındaki uygulamalar açılamaz ve askıya alınır
@@ -23,6 +24,6 @@ GitHub Actions her push'ta APK derler (Actions > APK > `kiss-apk`). Sabit imza i
 
 Testler (Robolectric) uygulamayı cihazsız çalıştırır ve ekran görüntülerini `app/build/shots/` altına kaydeder.
 
-minSdk 29, targetSdk 36. Kotlin, Jetpack Compose, CameraX.
+minSdk 29, targetSdk 36. Kotlin, Jetpack Compose.
 
 Yazı tipleri: Familjen Grotesk ve Figtree (SIL Open Font License 1.1, Google Fonts).

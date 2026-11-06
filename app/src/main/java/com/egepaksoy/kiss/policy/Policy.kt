@@ -18,6 +18,7 @@ import com.egepaksoy.kiss.KissApp
 import com.egepaksoy.kiss.MainActivity
 import com.egepaksoy.kiss.admin.KissAdminReceiver
 import com.egepaksoy.kiss.data.KissSettings
+import com.egepaksoy.kiss.data.SystemApps
 
 /**
  * Sıkı mod. KISS cihaz sahibi (Device Owner) olduğunda:
@@ -70,13 +71,7 @@ object Policy {
         add(Manifest.permission.READ_SMS)
         add(Manifest.permission.SEND_SMS)
         add(Manifest.permission.RECEIVE_SMS)
-        add(Manifest.permission.CAMERA)
-        if (Build.VERSION.SDK_INT >= 33) {
-            add(Manifest.permission.READ_MEDIA_IMAGES)
-            add(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            add(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
+        if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     fun admin(ctx: Context) = ComponentName(ctx, KissAdminReceiver::class.java)
@@ -118,6 +113,8 @@ object Policy {
         set += s.allowedApps
         if (s.notes) s.notesPackage?.let(set::add)
         set += s.messagingApps
+        if (s.camera) SystemApps.cameraPackage(ctx)?.let(set::add)
+        if (s.gallery) SystemApps.galleryPackage(ctx)?.let(set::add)
         set += KissApp.instance.settings.temporaryPackages
         return set
     }

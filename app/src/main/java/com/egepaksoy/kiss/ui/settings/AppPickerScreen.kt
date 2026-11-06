@@ -42,8 +42,8 @@ fun AppPickerScreen(s: KissSettings, mode: PickerMode, nav: Navigator) {
     }
     val (title, hint) = when (mode) {
         PickerMode.Notes -> "Not uygulaması" to "Ana ekrandaki \"Notlar\" bu uygulamayı açar."
-        PickerMode.Messaging -> "Mesaj uygulamaları" to "Mesajlar'a dokununca SMS'in yanında bu uygulamalar da sunulur."
-        PickerMode.Allowed -> "İzin verilen uygulamalar" to "Açtığın uygulamalar ana ekranda görünür ve sıkı modda kullanılabilir."
+        PickerMode.Messaging -> "Mesaj uygulamaları" to "Telefon > Mesajlar'da kısayol olarak ve Uygulamalar sayfasında görünür."
+        PickerMode.Allowed -> "İzin verilen uygulamalar" to "Açtığın uygulamalar Uygulamalar sayfasında görünür ve sıkı modda kullanılabilir."
     }
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         TopBar(title, { nav.pop() })

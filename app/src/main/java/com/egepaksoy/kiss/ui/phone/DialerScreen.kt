@@ -49,6 +49,10 @@ import com.egepaksoy.kiss.data.Contact
 import com.egepaksoy.kiss.data.Phone
 import com.egepaksoy.kiss.ui.Navigator
 import com.egepaksoy.kiss.ui.Screen
+import com.egepaksoy.kiss.data.KissSettings
+import com.egepaksoy.kiss.data.Sms
+import com.egepaksoy.kiss.ui.common.IconBtn
+import com.egepaksoy.kiss.ui.sms.ThreadList
 import com.egepaksoy.kiss.ui.common.Avatar
 import com.egepaksoy.kiss.ui.common.KIcons
 import com.egepaksoy.kiss.ui.common.Keypad
@@ -61,22 +65,40 @@ import com.egepaksoy.kiss.ui.theme.Kiss
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private enum class Tab(val label: String) { Keys("Tuşlar"), Recent("Son"), Contacts("Kişiler") }
+enum class PhoneTab(val label: String) { Keys("Tuşlar"), Recent("Son"), Messages("Mesajlar"), Contacts("Kişiler") }
 
+/** Arama ve SMS tek sayfada. */
 @Composable
-fun DialerScreen(nav: Navigator) {
-    var tab by rememberSaveable { mutableStateOf(Tab.Keys) }
+fun PhoneScreen(initialTab: Int, s: KissSettings, nav: Navigator) {
+    val ctx = LocalContext.current
+    val tick by KissApp.instance.resumeTick.collectAsState()
+    val unread by produceState(0, tick) {
+        value = withContext(Dispatchers.IO) { Sms.unreadCount(ctx) }
+        Sms.changes(ctx).collect { value = withContext(Dispatchers.IO) { Sms.unreadCount(ctx) } }
+    }
+    var tab by rememberSaveable(initialTab) {
+        mutableStateOf(
+            PhoneTab.entries.getOrNull(initialTab)
+                ?: if (Sms.unreadCount(ctx) > 0) PhoneTab.Messages else PhoneTab.Keys
+        )
+    }
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
-        TopBar("Arama", { nav.pop() })
-        Segmented(Tab.entries, tab, { it.label }) { tab = it }
+        TopBar("Telefon", { nav.pop() }) {
+            if (tab == PhoneTab.Messages) IconBtn(KIcons.Plus, "Yeni mesaj", { nav.push(Screen.NewMessage) })
+        }
+        Segmented(PhoneTab.entries, tab, { it.label }, dot = { it == PhoneTab.Messages && unread > 0 }) { tab = it }
         Box(Modifier.weight(1f)) {
             when (tab) {
-                Tab.Keys -> KeysTab()
-                Tab.Recent -> RequirePermissions(
+                PhoneTab.Keys -> KeysTab()
+                PhoneTab.Messages -> RequirePermissions(
+                    listOf(Manifest.permission.READ_SMS, Manifest.permission.READ_CONTACTS),
+                    "Mesajları göstermek için SMS ve rehber izni gerekiyor.",
+                ) { ThreadList(nav, s.messagingApps) }
+                PhoneTab.Recent -> RequirePermissions(
                     listOf(Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_CONTACTS),
                     "Son aramaları göstermek için arama kaydı izni gerekiyor.",
                 ) { RecentTab(nav) }
-                Tab.Contacts -> RequirePermissions(
+                PhoneTab.Contacts -> RequirePermissions(
                     listOf(Manifest.permission.READ_CONTACTS),
                     "Kişileri göstermek için rehber izni gerekiyor.",
                 ) { ContactsTab(nav) }
@@ -86,7 +108,7 @@ fun DialerScreen(nav: Navigator) {
 }
 
 @Composable
-fun <T> Segmented(items: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
+fun <T> Segmented(items: List<T>, selected: T, label: (T) -> String, dot: (T) -> Boolean = { false }, onSelect: (T) -> Unit) {
     val c = Kiss.colors
     Row(
         Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.soft).padding(3.dp),
@@ -97,7 +119,12 @@ fun <T> Segmented(items: List<T>, selected: T, label: (T) -> String, onSelect: (
                 Modifier.weight(1f).clip(RoundedCornerShape(11.dp)).background(if (on) c.bg else c.soft)
                     .clickable { onSelect(t) }.padding(vertical = 9.dp),
                 contentAlignment = Alignment.Center,
-            ) { Text(label(t), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (on) c.fg else c.muted) }
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(label(t), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (on) c.fg else c.muted)
+                    if (dot(t)) Box(Modifier.padding(start = 5.dp).size(7.dp).clip(CircleShape).background(c.accent))
+                }
+            }
         }
     }
 }

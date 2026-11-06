@@ -88,9 +88,9 @@ fun SettingsScreen(s: KissSettings, nav: Navigator) {
 
             SectionLabel("Özellikler")
             Group {
-                Toggle("Kamera", "Uygulama içi kamera", s.camera) { v -> store.update { it.copy(camera = v) } }
+                Toggle("Kamera", "Telefonun kendi kamera uygulaması", s.camera) { v -> store.update { it.copy(camera = v) } }
                 Divider()
-                Toggle("Galeri", "Fotoğrafların", s.gallery) { v -> store.update { it.copy(gallery = v) } }
+                Toggle("Galeri", "Telefonun kendi galeri uygulaması", s.gallery) { v -> store.update { it.copy(gallery = v) } }
                 Divider()
                 Toggle("Fener", "Ana ekranda kısa yol", s.torch) { v -> store.update { it.copy(torch = v) } }
                 Divider()
@@ -118,7 +118,7 @@ fun SettingsScreen(s: KissSettings, nav: Navigator) {
                 }
                 Divider()
                 GroupRow(
-                    "Mesaj uygulaması ekle", "Ör. WhatsApp. Mesajlar'a dokununca seçim sunulur.",
+                    "Mesaj uygulaması ekle", "Ör. WhatsApp. Telefon > Mesajlar'da kısayol olur, Uygulamalar'da görünür.",
                     titleColor = c.accent,
                     onClick = { nav.push(Screen.AppPicker(PickerMode.Messaging)) },
                     trailing = { Chevron() },

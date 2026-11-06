@@ -75,19 +75,7 @@ import java.time.format.DateTimeFormatter
 private val SMS_PERMS = listOf(Manifest.permission.READ_SMS, Manifest.permission.READ_CONTACTS)
 
 @Composable
-fun MessagesScreen(nav: Navigator) {
-    Column(Modifier.fillMaxSize().systemBarsPadding()) {
-        TopBar("Mesajlar", { nav.pop() }) {
-            IconBtn(KIcons.Plus, "Yeni mesaj", { nav.push(Screen.NewMessage) })
-        }
-        RequirePermissions(SMS_PERMS, "Mesajları göstermek için SMS ve rehber izni gerekiyor.") {
-            ThreadList(nav)
-        }
-    }
-}
-
-@Composable
-private fun ThreadList(nav: Navigator) {
+fun ThreadList(nav: Navigator, messagingApps: Set<String> = emptySet()) {
     val ctx = LocalContext.current
     val c = Kiss.colors
     val tick by KissApp.instance.resumeTick.collectAsState()
@@ -96,9 +84,29 @@ private fun ThreadList(nav: Navigator) {
     val threads by produceState<List<SmsThread>?>(null, tick, reload) {
         value = withContext(Dispatchers.IO) { Sms.threads(ctx) }
     }
+    val messengers by produceState(emptyList<com.egepaksoy.kiss.data.AppEntry>(), messagingApps) {
+        value = withContext(Dispatchers.IO) { com.egepaksoy.kiss.data.Apps.entries(ctx, messagingApps) }
+    }
     val list = threads ?: return
-    if (list.isEmpty()) { Empty("Mesaj yok"); return }
     LazyColumn(Modifier.fillMaxSize()) {
+        if (messengers.isNotEmpty()) item(key = "messengers") {
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                messengers.forEach { m ->
+                    Row(
+                        Modifier.clip(RoundedCornerShape(14.dp)).background(c.soft)
+                            .clickable { com.egepaksoy.kiss.data.Apps.launch(ctx, m.pkg) }
+                            .padding(horizontal = 14.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) { Text(m.label + " ile aç", fontWeight = FontWeight.SemiBold, fontSize = 14.sp) }
+                }
+            }
+        }
+        if (list.isEmpty()) item(key = "empty") {
+            Text("SMS yok", color = c.muted, modifier = Modifier.padding(24.dp))
+        }
         items(list, key = { it.threadId }) { t ->
             Row(
                 Modifier.padding(horizontal = 8.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp))

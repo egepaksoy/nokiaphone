@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
             intent?.action == ACTION_OPEN_THREAD -> {
                 val address = intent.getStringExtra(EXTRA_ADDRESS) ?: return
                 nav.home()
-                nav.push(Screen.Messages)
+                nav.push(Screen.Phone(com.egepaksoy.kiss.ui.phone.PhoneTab.Messages.ordinal))
                 nav.push(Screen.Thread(null, address))
             }
             !fresh && intent?.hasCategory(Intent.CATEGORY_HOME) == true -> nav.home()

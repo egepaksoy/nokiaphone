@@ -70,7 +70,7 @@ fun OnboardingScreen() {
                 } else { error = "PIN'ler aynı değil"; step = Step.Pin; false }
             }
             Step.Permissions -> Intro(
-                "İzinler", "Arama yapmak, mesajları göstermek, fotoğraf çekmek ve galeriyi açmak için izin gerekiyor. " +
+                "İzinler", "Arama yapmak, son aramaları ve mesajları göstermek için izin gerekiyor. " +
                     "Veriler telefondan çıkmaz; KISS internete bağlanmaz.",
                 "İzinleri ver",
             ) { permLauncher.launch(Policy.OWN_PERMISSIONS.toTypedArray()) }

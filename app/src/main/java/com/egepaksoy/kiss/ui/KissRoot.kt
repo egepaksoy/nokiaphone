@@ -10,11 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.egepaksoy.kiss.KissApp
 import com.egepaksoy.kiss.ui.calc.CalculatorScreen
-import com.egepaksoy.kiss.ui.camera.CameraScreen
-import com.egepaksoy.kiss.ui.gallery.GalleryScreen
-import com.egepaksoy.kiss.ui.gallery.PhotoScreen
+import com.egepaksoy.kiss.ui.home.AppsScreen
 import com.egepaksoy.kiss.ui.home.HomeScreen
-import com.egepaksoy.kiss.ui.phone.DialerScreen
+import com.egepaksoy.kiss.ui.phone.PhoneScreen
 import com.egepaksoy.kiss.ui.settings.AppPickerScreen
 import com.egepaksoy.kiss.ui.settings.ChangePinScreen
 import com.egepaksoy.kiss.ui.settings.CountdownScreen
@@ -22,7 +20,6 @@ import com.egepaksoy.kiss.ui.settings.GateScreen
 import com.egepaksoy.kiss.ui.settings.OnboardingScreen
 import com.egepaksoy.kiss.ui.settings.SettingsScreen
 import com.egepaksoy.kiss.ui.settings.StrictScreen
-import com.egepaksoy.kiss.ui.sms.MessagesScreen
 import com.egepaksoy.kiss.ui.sms.NewMessageScreen
 import com.egepaksoy.kiss.ui.sms.ThreadScreen
 import com.egepaksoy.kiss.ui.theme.Kiss
@@ -44,13 +41,10 @@ fun KissRoot() {
         }
         when (screen) {
             Screen.Home -> HomeScreen(s, nav)
-            Screen.Dialer -> DialerScreen(nav)
-            Screen.Messages -> MessagesScreen(nav)
+            is Screen.Phone -> PhoneScreen(screen.tab, s, nav)
+            Screen.AppsList -> AppsScreen(s, nav)
             Screen.NewMessage -> NewMessageScreen(nav)
             is Screen.Thread -> ThreadScreen(screen.threadId, screen.address, nav)
-            Screen.Camera -> CameraScreen(nav, s.gallery)
-            Screen.Gallery -> GalleryScreen(nav)
-            is Screen.Photo -> PhotoScreen(screen.index, nav)
             Screen.Calculator -> CalculatorScreen(nav)
             Screen.Gate -> GateScreen(s, nav)
             Screen.Settings -> SettingsScreen(s, nav)
