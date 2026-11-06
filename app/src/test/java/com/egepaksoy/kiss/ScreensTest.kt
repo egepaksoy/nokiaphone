@@ -32,7 +32,8 @@ class ScreensTest {
             Manifest.permission.READ_CONTACTS, Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_SMS,
             Manifest.permission.SEND_SMS, Manifest.permission.CALL_PHONE,
         )
-        listOf("com.example.maps" to "Haritalar", "com.example.bank" to "Banka", "com.example.keep" to "Keep", "com.whatsapp" to "WhatsApp").forEach { (pkg, label) ->
+        listOf("com.example.maps" to "Haritalar", "com.example.bank" to "Banka", "com.example.keep" to "Keep", "com.whatsapp" to "WhatsApp",
+            "com.google.android.apps.photos" to "Fotoğraflar", "com.sec.android.gallery3d" to "Galeri", "com.sec.android.app.clockpackage" to "Saat").forEach { (pkg, label) ->
             val ai = ApplicationInfo().apply { packageName = pkg; nonLocalizedLabel = label; name = label }
             val pi = PackageInfo().apply { packageName = pkg; applicationInfo = ai }
             shadowOf(app.packageManager).installPackage(pi)
@@ -82,5 +83,18 @@ class ScreensTest {
         go(Screen.Gate); shot("09-gate")
         go(Screen.Settings); shot("10-settings")
         go(Screen.Strict); shot("11-strict")
+        rule.runOnUiThread { KissApp.instance.settings.update { it.copy(enabled = false) } }
+        shot("12-paused")
+        rule.runOnUiThread { KissApp.instance.settings.update { it.copy(enabled = true) } }
+    }
+
+    @Test fun clockFound() {
+        val ctx = ApplicationProvider.getApplicationContext<KissApp>()
+        org.junit.Assert.assertEquals("com.sec.android.app.clockpackage", com.egepaksoy.kiss.data.Alarm.clockPackage(ctx))
+    }
+
+    @Test fun galleryPrefersPhoneGallery() {
+        val ctx = ApplicationProvider.getApplicationContext<KissApp>()
+        org.junit.Assert.assertEquals("com.sec.android.gallery3d", com.egepaksoy.kiss.data.SystemApps.galleryPackage(ctx))
     }
 }

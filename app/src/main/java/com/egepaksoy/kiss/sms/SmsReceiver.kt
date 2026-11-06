@@ -17,6 +17,7 @@ import com.egepaksoy.kiss.data.Phone
 class SmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
+        if (!KissApp.instance.settings.value.enabled) return // KISS kapalıyken bildirimi telefonun mesaj uygulaması gösterir
         val parts = runCatching { Telephony.Sms.Intents.getMessagesFromIntent(intent) }.getOrNull() ?: return
         if (parts.isEmpty()) return
         val address = parts[0].displayOriginatingAddress ?: parts[0].originatingAddress ?: return

@@ -39,6 +39,10 @@ fun KissRoot() {
             OnboardingScreen()
             return@Box
         }
+        if (!s.enabled && !com.egepaksoy.kiss.policy.Policy.isStrictActive(androidx.compose.ui.platform.LocalContext.current)) {
+            com.egepaksoy.kiss.ui.settings.PausedScreen()
+            return@Box
+        }
         when (screen) {
             Screen.Home -> HomeScreen(s, nav)
             is Screen.Phone -> PhoneScreen(screen.tab, s, nav)

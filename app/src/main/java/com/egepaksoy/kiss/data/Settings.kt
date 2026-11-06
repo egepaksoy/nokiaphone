@@ -16,6 +16,8 @@ data class KissSettings(
     /** Mesajlar'a dokununca SMS'in yanında sunulan uygulamalar (ör. WhatsApp). */
     val messagingApps: Set<String> = emptySet(),
     val doubleTapLock: Boolean = true,
+    /** false: KISS kapalı, ana ekran tuşu telefonun normal ana ekranını açar. */
+    val enabled: Boolean = true,
     val allowedApps: Set<String> = emptySet(),
     val strict: Boolean = false,
     val notificationPanel: Boolean = true,
@@ -63,6 +65,7 @@ class SettingsStore(context: Context) {
         notesPackage = prefs.getString("notesPackage", null),
         messagingApps = prefs.getStringSet("messagingApps", emptySet())!!.toSet(),
         doubleTapLock = prefs.getBoolean("doubleTapLock", true),
+        enabled = prefs.getBoolean("enabled", true),
         allowedApps = prefs.getStringSet("allowedApps", emptySet())!!.toSet(),
         strict = prefs.getBoolean("strict", false),
         notificationPanel = prefs.getBoolean("notificationPanel", true),
@@ -83,6 +86,7 @@ class SettingsStore(context: Context) {
             .putString("notesPackage", s.notesPackage)
             .putStringSet("messagingApps", s.messagingApps)
             .putBoolean("doubleTapLock", s.doubleTapLock)
+            .putBoolean("enabled", s.enabled)
             .putStringSet("allowedApps", s.allowedApps)
             .putBoolean("strict", s.strict)
             .putBoolean("notificationPanel", s.notificationPanel)

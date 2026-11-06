@@ -30,6 +30,7 @@ import com.egepaksoy.kiss.KissApp
 import com.egepaksoy.kiss.data.AppEntry
 import com.egepaksoy.kiss.data.Apps
 import com.egepaksoy.kiss.data.KissSettings
+import com.egepaksoy.kiss.data.SystemApps
 import com.egepaksoy.kiss.policy.Policy
 import com.egepaksoy.kiss.ui.Navigator
 import com.egepaksoy.kiss.ui.PickerMode
@@ -69,6 +70,26 @@ fun SettingsScreen(s: KissSettings, nav: Navigator) {
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         TopBar("Ayarlar", { nav.pop() })
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 14.dp).padding(bottom = 24.dp)) {
+            SectionLabel("KISS")
+            Group {
+                GroupRow(
+                    "KISS açık",
+                    if (s.strict && isOwner) "Kapatmak için önce sıkı modu kapat"
+                    else "Kapatınca telefonun normal ana ekranı açılır. Geri açmak için uygulama listesinden KISS'e dokun.",
+                    trailing = {
+                        KSwitch(true, { v ->
+                            if (!v) {
+                                store.update { it.copy(enabled = false) }
+                                nav.home()
+                                if (!SystemApps.openOtherLauncher(ctx)) {
+                                    runCatching { ctx.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                                }
+                            }
+                        }, enabled = !(s.strict && isOwner))
+                    },
+                )
+            }
+
             SectionLabel("Sıkı mod")
             Group {
                 GroupRow(

@@ -90,9 +90,7 @@ object Policy {
         runCatching { pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName }
             .getOrNull()?.takeIf { it != "android" }
 
-    fun clockPackage(ctx: Context): String? =
-        resolvePackage(ctx.packageManager, Intent(AlarmClock.ACTION_SHOW_ALARMS))
-            ?: resolvePackage(ctx.packageManager, Intent(AlarmClock.ACTION_SET_ALARM))
+    fun clockPackage(ctx: Context): String? = com.egepaksoy.kiss.data.Alarm.clockPackage(ctx)
 
     fun settingsPackage(ctx: Context): String =
         resolvePackage(ctx.packageManager, Intent(Settings.ACTION_SETTINGS)) ?: "com.android.settings"

@@ -98,11 +98,11 @@ fun StrictScreen(s: KissSettings, nav: Navigator) {
                         if (s.strict) "Açık" else "Kapalı",
                         onClick = {
                             if (s.strict) nav.push(Screen.Countdown(CountdownAction.ExitStrict))
-                            else store.update { it.copy(strict = true) }
+                            else store.update { it.copy(strict = true, enabled = true) }
                         },
                         trailing = {
                             KSwitch(s.strict, { v ->
-                                if (v) store.update { it.copy(strict = true) }
+                                if (v) store.update { it.copy(strict = true, enabled = true) }
                                 else nav.push(Screen.Countdown(CountdownAction.ExitStrict))
                             })
                         },

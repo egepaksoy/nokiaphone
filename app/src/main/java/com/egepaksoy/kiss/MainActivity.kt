@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (forwardHomeIfDisabled(intent)) { finish(); return }
         enableEdgeToEdge()
         setContent { KissTheme { KissRoot() } }
         handleIntent(intent, fresh = true)
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        if (forwardHomeIfDisabled(intent)) return
         handleIntent(intent, fresh = false)
     }
 
@@ -69,6 +71,18 @@ class MainActivity : ComponentActivity() {
         }
         com.egepaksoy.kiss.data.Phone.clearCache()
         app.resumeTick.value++
+    }
+
+    /**
+     * KISS kapalıyken ana ekran tuşu telefonun normal ana ekranını açar.
+     * Uygulama listesinden açılınca (LAUNCHER) KISS ekranı görünür ve yeniden açılabilir.
+     */
+    private fun forwardHomeIfDisabled(intent: Intent?): Boolean {
+        if (app.settings.value.enabled || Policy.isStrictActive(this)) return false
+        if (intent?.hasCategory(Intent.CATEGORY_HOME) != true) return false
+        val ok = com.egepaksoy.kiss.data.SystemApps.openOtherLauncher(this)
+        if (ok) @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+        return ok
     }
 
     fun enforceLockTask() {
