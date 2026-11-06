@@ -1,4 +1,6 @@
-# Sade: Plan (v0.1)
+# KISS: Plan (v0.1)
+
+> Uygulamanın adı "Sade" yerine **KISS** (Keep It Seriously Simple) oldu. Başlangıç seviyesi: **Sıkı**. Ek modüller: alarm, fener, hesap makinesi, notlar (notlar, kullanıcının seçtiği uygulamayı açar).
 
 ## Fikir
 Sade, Android'de **varsayılan ana ekran (launcher)** olarak seçilir. Ana ekran tuşuna her basıldığında Sade açılır
@@ -43,8 +45,20 @@ Modüller: `launcher`, `phone`, `sms`, `camera`, `gallery`, `apps`, `settings`, 
 5. **Koruma**: erişilebilirlik bekçisi, bildirim filtresi, Device Owner + Lock Task, geçici izin (15 dk), sistem panelleri
 6. **Cila**: varsayılan SMS/arama uygulaması olma, ekran süresi özeti, ek modüller
 
-## Açık kararlar
-1. Başlangıç koruma seviyesi (öneri: Orta)
-2. Telefon modeli ve Android sürümü
-3. Uygulama adı ("Sade" çalışma adı)
-4. Ek modüller: alarm, fener, hesap makinesi, notlar, müzik
+## Kararlar
+1. Koruma seviyesi: Sıkı (Device Owner + Lock Task + gizli uygulamaları askıya alma)
+2. Cihaz: Samsung Galaxy S25, Android 17
+3. Ad: KISS
+4. Ek modüller: alarm, fener, hesap makinesi, notlar
+
+## v0.1 durumu
+- [x] İskelet, tema, launcher kaydı, CI ile APK
+- [x] Ana ekran, ayarlar, modüller, izin listesi, ayar kilidi (bekleme + PIN)
+- [x] Arama: tuş takımı, son aramalar, kişiler
+- [x] SMS: konuşmalar, konuşma, gönderim, gelen mesaj bildirimi
+- [x] Kamera (CameraX, fotoğraf), galeri (görüntüleme, silme)
+- [x] Hesap makinesi, fener, alarm, notlar
+- [x] Sıkı mod: Device Owner, Lock Task, askıya alma, geçici sistem ayarı erişimi, acil çıkış
+- [ ] Video çekimi
+- [ ] Varsayılan SMS uygulaması olma (MMS dahil)
+- [ ] Gerçek cihazda Samsung testleri
