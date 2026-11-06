@@ -20,7 +20,7 @@ data class KissSettings(
     val strict: Boolean = false,
     val notificationPanel: Boolean = true,
     val suspendHidden: Boolean = true,
-    val waitSeconds: Int = 30,
+    val waitSeconds: Int = 5,
     val pin: String? = null,
     val onboarded: Boolean = false,
 )
@@ -30,6 +30,11 @@ class SettingsStore(context: Context) {
     private val internal = context.getSharedPreferences("kiss_internal", Context.MODE_PRIVATE)
 
     init {
+        // v0.4: bekleme süresi 30 sn'den 5 sn'ye indi; eski varsayılanı bir kez güncelle.
+        if (!internal.getBoolean("wait5_migrated", false)) {
+            if (prefs.getInt("waitSeconds", 30) == 30) prefs.edit().putInt("waitSeconds", 5).commit()
+            internal.edit().putBoolean("wait5_migrated", true).commit()
+        }
         // İlk açılışta WhatsApp yüklüyse mesaj seçeneklerine ekle.
         if (!prefs.contains("messagingApps")) {
             val pm = context.packageManager
@@ -62,7 +67,7 @@ class SettingsStore(context: Context) {
         strict = prefs.getBoolean("strict", false),
         notificationPanel = prefs.getBoolean("notificationPanel", true),
         suspendHidden = prefs.getBoolean("suspendHidden", true),
-        waitSeconds = prefs.getInt("waitSeconds", 30),
+        waitSeconds = prefs.getInt("waitSeconds", 5),
         pin = prefs.getString("pin", null),
         onboarded = prefs.getBoolean("onboarded", false),
     )

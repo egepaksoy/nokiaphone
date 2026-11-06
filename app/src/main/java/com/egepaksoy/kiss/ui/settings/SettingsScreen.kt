@@ -46,7 +46,7 @@ import com.egepaksoy.kiss.ui.theme.Kiss
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-val WAIT_OPTIONS = listOf(10, 30, 60, 120, 300)
+val WAIT_OPTIONS = listOf(5, 10, 30, 60, 120, 300)
 
 fun waitLabel(s: Int) = if (s < 60) "$s sn" else "${s / 60} dk"
 
