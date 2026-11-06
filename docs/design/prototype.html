@@ -1,0 +1,643 @@
+<title>Sade Telefon</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the live phone prototype sits beside its notes, then the plan reads top to bottom. */
+:root{
+  --bg:#F1F2EE; --surface:#FFFFFF; --fg:#161917; --muted:#5C635E; --line:#D8DCD4;
+  --accent:#2B47D6; --accent-soft:#E4E8FF; --frame:#1C1F1D; --ok:#1E8A4E; --warn:#B26A00; --bad:#C2372C;
+  /* app (inside the phone) */
+  --a-bg:#FBFBF8; --a-fg:#121413; --a-muted:#767C77; --a-line:#E6E8E2; --a-soft:#EFF0EB;
+  --a-accent:#2B47D6; --a-call:#1E9E57; --a-end:#D93A2E; --a-me:#2B47D6; --a-me-fg:#FFFFFF;
+  --cam-bg:#050505; --cam-fg:#FFFFFF;
+  --f-display:"Familjen Grotesk","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1110; --surface:#171A18; --fg:#E9ECE7; --muted:#9BA29C; --line:#2A2F2C;
+    --accent:#93A5FF; --accent-soft:#1E2546; --frame:#2C302D; --ok:#4CC27F; --warn:#E6A23C; --bad:#F06A5E;
+    --a-bg:#060706; --a-fg:#F0F2EE; --a-muted:#8A918B; --a-line:#1C201D; --a-soft:#141715;
+    --a-accent:#93A5FF; --a-call:#2DBA6A; --a-end:#F0564A; --a-me:#3B56E0; --a-me-fg:#FFFFFF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1110; --surface:#171A18; --fg:#E9ECE7; --muted:#9BA29C; --line:#2A2F2C;
+  --accent:#93A5FF; --accent-soft:#1E2546; --frame:#2C302D; --ok:#4CC27F; --warn:#E6A23C; --bad:#F06A5E;
+  --a-bg:#060706; --a-fg:#F0F2EE; --a-muted:#8A918B; --a-line:#1C201D; --a-soft:#141715;
+  --a-accent:#93A5FF; --a-call:#2DBA6A; --a-end:#F0564A; --a-me:#3B56E0; --a-me-fg:#FFFFFF;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-0.02em}
+h1{font-size:clamp(2.6rem,7vw,4.2rem);font-weight:600;line-height:1}
+h2{font-size:1.65rem;font-weight:600;line-height:1.15}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.15rem;max-width:62ch;color:var(--fg)}
+.muted{color:var(--muted)}
+header.top{display:grid;gap:16px;padding-bottom:36px;border-bottom:1px solid var(--line)}
+section{padding-block:44px;border-bottom:1px solid var(--line);display:grid;gap:20px}
+section:last-of-type{border-bottom:0}
+.prose{max-width:66ch;display:grid;gap:12px}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+code{background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+
+/* prototype area */
+.proto{display:grid;grid-template-columns:auto minmax(0,1fr);gap:40px;align-items:start}
+@media (max-width:820px){.proto{grid-template-columns:minmax(0,1fr)}.phone-col{justify-self:center;max-width:100%}}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 .9rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip:focus-visible,.phone button:focus-visible,.phone input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.notes{display:grid;gap:18px;min-width:0}
+.note-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:10px}
+.note-card ul{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.try{font-size:.92rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+.try b{color:var(--fg);font-weight:600}
+
+/* phone */
+.phone{width:320px;max-width:100%;height:660px;border-radius:46px;background:var(--frame);padding:10px;box-shadow:0 30px 60px -30px rgba(0,0,0,.45)}
+.screen{height:100%;border-radius:37px;background:var(--a-bg);color:var(--a-fg);overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:var(--f-body);font-size:15px;line-height:1.35}
+.screen button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.sb{flex:none;height:36px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;font:500 12px var(--f-mono);color:var(--a-fg)}
+.sb .r{display:flex;gap:6px;align-items:center}
+.sb svg{width:16px;height:16px}
+.view{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;scrollbar-width:none}
+.view::-webkit-scrollbar{display:none}
+.view>*{flex-shrink:0}
+.homebar{flex:none;height:24px;display:flex;align-items:center;justify-content:center}
+.homebar button{width:110px;height:5px;border-radius:9px;background:var(--a-fg);opacity:.3}
+.cam .sb,.cam .homebar button{color:var(--cam-fg)}
+.cam .homebar button{background:var(--cam-fg)}
+.ico{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* home */
+.home{padding:18px 26px 14px;gap:0}
+.h-clock{font:500 68px/0.95 var(--f-display);letter-spacing:-0.045em;font-variant-numeric:tabular-nums}
+.h-date{color:var(--a-muted);margin-top:8px;font-size:15px}
+.h-list{display:flex;flex-direction:column;margin-top:34px}
+.h-item{display:flex;align-items:center;gap:10px;text-align:left;font:500 29px/1.15 var(--f-display)!important;letter-spacing:-0.02em;padding:7px 0!important}
+.h-item .badge{font:600 12px var(--f-body);background:var(--a-accent);color:var(--a-me-fg);border-radius:99px;padding:2px 8px;letter-spacing:0}
+.h-item .sub{font:400 14px var(--f-body);color:var(--a-muted);letter-spacing:0}
+.h-sep{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--a-muted);margin:18px 0 6px;display:flex;align-items:center;gap:10px}
+.h-sep::after{content:"";flex:1;height:1px;background:var(--a-line)}
+.h-apps .h-item{font-size:21px!important;padding:5px 0!important;color:var(--a-fg)}
+.h-foot{margin-top:auto;padding-top:18px;display:flex;align-items:center;justify-content:space-between}
+.round{width:46px;height:46px;border-radius:50%;background:var(--a-soft)!important;display:grid;place-items:center}
+.round.on{background:var(--a-fg)!important;color:var(--a-bg)!important}
+.stat{font-size:12px;color:var(--a-muted);text-align:center;line-height:1.3}
+.stat b{display:block;font:600 15px var(--f-display);color:var(--a-fg)}
+
+/* generic app screens */
+.bar{flex:none;display:flex;align-items:center;gap:8px;padding:6px 16px 10px}
+.bar h3{font-size:20px;flex:1}
+.back{width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
+.back:hover{background:var(--a-soft)!important}
+.seg{display:flex;background:var(--a-soft);border-radius:12px;padding:3px;margin:0 16px 8px}
+.seg button{flex:1;padding:7px 0!important;border-radius:9px;font-size:13px!important;font-weight:600!important;color:var(--a-muted)!important}
+.seg button[aria-pressed="true"]{background:var(--a-bg)!important;color:var(--a-fg)!important;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* dialer */
+.num{text-align:center;font:500 30px var(--f-display);letter-spacing:.02em;min-height:46px;padding:14px 16px 0;font-variant-numeric:tabular-nums;word-break:break-all}
+.num.empty{color:var(--a-muted);font-size:16px;font-family:var(--f-body);padding-top:24px}
+.match{text-align:center;font-size:13px;color:var(--a-accent);min-height:18px}
+.pad{display:grid;grid-template-columns:repeat(3,64px);gap:12px 22px;justify-content:center;margin-top:auto;padding:10px 0 4px}
+.key{width:64px;height:64px;border-radius:50%;background:var(--a-soft)!important;display:flex;flex-direction:column;align-items:center;justify-content:center;font:500 25px/1 var(--f-display)!important}
+.key small{font:600 9px var(--f-body);letter-spacing:.12em;color:var(--a-muted);margin-top:2px}
+.key:active{background:var(--a-line)!important}
+.callrow{display:grid;grid-template-columns:repeat(3,64px);gap:22px;justify-content:center;padding:12px 0 14px}
+.callbtn{width:64px;height:64px;border-radius:50%;background:var(--a-call)!important;color:#fff!important;display:grid;place-items:center}
+.endbtn{background:var(--a-end)!important}
+.del{display:grid;place-items:center;color:var(--a-muted)!important}
+.rows{display:flex;flex-direction:column;padding:0 8px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 10px!important;border-radius:12px;text-align:left;width:100%}
+.row:hover{background:var(--a-soft)!important}
+.av{width:40px;height:40px;border-radius:50%;background:var(--a-soft);display:grid;place-items:center;font:600 14px var(--f-display);flex:none}
+.row .t{flex:1;min-width:0}
+.row .n{font-weight:600}
+.row .p{color:var(--a-muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .tm{font-size:12px;color:var(--a-muted);align-self:flex-start;padding-top:2px}
+.row .miss{color:var(--a-end)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--a-accent);display:inline-block;margin-left:6px;vertical-align:middle}
+.letter{font:500 11px var(--f-mono);color:var(--a-muted);padding:10px 18px 2px;letter-spacing:.1em}
+
+/* calling */
+.calling{align-items:center;justify-content:space-between;padding:60px 20px 26px;text-align:center}
+.calling .big{font:500 30px var(--f-display);letter-spacing:-0.02em}
+.pulse{width:110px;height:110px;border-radius:50%;background:var(--a-soft);display:grid;place-items:center;font:600 34px var(--f-display);margin:0 auto 22px;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 18px var(--a-soft)}}
+
+/* thread */
+.thread{padding:4px 14px 10px;gap:8px;justify-content:flex-end}
+.day{align-self:center;font-size:11px;color:var(--a-muted);font-family:var(--f-mono);margin:6px 0}
+.bub{max-width:78%;padding:9px 13px;border-radius:18px;background:var(--a-soft);font-size:14px;align-self:flex-start;border-bottom-left-radius:6px}
+.bub.me{background:var(--a-me);color:var(--a-me-fg);align-self:flex-end;border-bottom-left-radius:18px;border-bottom-right-radius:6px}
+.bub .bt{display:block;font-size:10px;opacity:.65;margin-top:3px;text-align:right}
+.compose{flex:none;display:flex;gap:8px;padding:8px 12px 6px;border-top:1px solid var(--a-line)}
+.compose input{flex:1;min-width:0;border:1px solid var(--a-line);background:var(--a-soft);color:var(--a-fg);border-radius:20px;padding:9px 14px;font:inherit;font-size:14px}
+.send{width:40px;height:40px;border-radius:50%;background:var(--a-accent)!important;color:var(--a-me-fg)!important;display:grid;place-items:center;flex:none}
+.send .ico{width:18px;height:18px}
+
+/* camera */
+.cam{background:var(--cam-bg);color:var(--cam-fg)}
+.vf{flex:1;position:relative;margin:4px 0;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#9DB7C9 0%,#C9D3CF 38%,#7E8F63 39%,#55663F 70%,#3D4A2E 100%)}
+.vf::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 33.2%,rgba(255,255,255,.25) 33.3%,rgba(255,255,255,.25) 33.6%,transparent 33.7%,transparent 66.4%,rgba(255,255,255,.25) 66.5%,rgba(255,255,255,.25) 66.8%,transparent 66.9%),linear-gradient(180deg,transparent 33.2%,rgba(255,255,255,.25) 33.3%,rgba(255,255,255,.25) 33.6%,transparent 33.7%,transparent 66.4%,rgba(255,255,255,.25) 66.5%,rgba(255,255,255,.25) 66.8%,transparent 66.9%)}
+.vf .sun{position:absolute;width:46px;height:46px;border-radius:50%;background:#FFF3C9;top:16%;right:22%;box-shadow:0 0 40px 10px rgba(255,243,201,.6)}
+.vf .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.vf .flash.go{animation:flash .35s ease-out}
+@keyframes flash{0%{opacity:.9}100%{opacity:0}}
+.cam-top{display:flex;justify-content:space-between;align-items:center;padding:4px 18px 6px}
+.cam-top button{color:var(--cam-fg)!important;width:36px;height:36px;display:grid;place-items:center}
+.modes{display:flex;justify-content:center;gap:18px;font:600 11px var(--f-mono);letter-spacing:.12em;padding:8px 0 4px;opacity:.9}
+.modes span:not(.on){opacity:.5}
+.modes .on{color:#FFD45C}
+.cam-bot{display:flex;align-items:center;justify-content:space-between;padding:10px 32px 8px}
+.thumb{width:44px;height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.8)!important;overflow:hidden}
+.shutter{width:72px;height:72px;border-radius:50%;border:4px solid var(--cam-fg)!important;display:grid;place-items:center}
+.shutter i{width:56px;height:56px;border-radius:50%;background:var(--cam-fg);display:block;transition:transform .1s}
+.shutter:active i{transform:scale(.9)}
+.flip{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15)!important;color:var(--cam-fg)!important;display:grid;place-items:center}
+.toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;font-size:12px;padding:6px 12px;border-radius:99px;white-space:nowrap}
+
+/* gallery */
+.gal-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 18px 8px;font-size:13px;color:var(--a-muted)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 3px 8px}
+.ph{aspect-ratio:1;max-width:100%;border-radius:3px}
+.ph.new{animation:pop .4s ease-out}
+@keyframes pop{0%{transform:scale(.6);opacity:0}}
+
+/* gate */
+.gate{align-items:center;text-align:center;padding:30px 26px 10px;gap:14px}
+.ring{width:150px;height:150px;border-radius:50%;background:conic-gradient(var(--a-accent) calc(var(--p)*1%),var(--a-soft) 0);display:grid;place-items:center;margin:14px auto 6px}
+.ring span{width:126px;height:126px;border-radius:50%;background:var(--a-bg);display:grid;place-items:center;font:500 44px var(--f-display);font-variant-numeric:tabular-nums}
+.gate h3{font-size:22px}
+.gate p{color:var(--a-muted);font-size:14px;max-width:24ch}
+.pins{display:flex;gap:14px;justify-content:center;margin:6px 0}
+.pins i{width:13px;height:13px;border-radius:50%;border:2px solid var(--a-fg);display:block}
+.pins i.f{background:var(--a-fg)}
+.gate .pad{gap:10px 20px;grid-template-columns:repeat(3,58px);margin-top:4px}
+.gate .key{width:58px;height:58px;font-size:22px!important}
+
+/* settings */
+.set{padding:0 14px 14px}
+.grp-l{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--a-muted);padding:16px 8px 6px}
+.grp{background:var(--a-soft);border-radius:16px;overflow:hidden}
+.srow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--a-line);width:100%;text-align:left}
+.grp .srow:last-child{border-bottom:0}
+.srow .t{flex:1;min-width:0}
+.srow .s{display:block;font-size:12px;color:var(--a-muted)}
+.sw{width:42px;height:25px;border-radius:99px;background:var(--a-line)!important;position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:var(--a-bg);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.sw[aria-checked="true"]{background:var(--a-call)!important}
+.sw[aria-checked="true"]::after{transform:translateX(17px)}
+.lvl{display:flex;gap:6px;padding:10px}
+.lvl button{flex:1;padding:8px 0!important;border-radius:10px;font-size:13px!important;font-weight:600!important;border:1px solid var(--a-line)!important}
+.lvl button[aria-pressed="true"]{background:var(--a-fg)!important;color:var(--a-bg)!important;border-color:var(--a-fg)!important}
+.lvl-d{font-size:12px;color:var(--a-muted);padding:0 14px 12px}
+.chev{color:var(--a-muted);font-size:18px}
+.danger{color:var(--a-end)}
+
+/* plan content */
+.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.levels{grid-template-columns:minmax(0,1fr)}}
+.lv{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:20px;display:grid;gap:10px;align-content:start}
+.lv .tag{font:500 .72rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;justify-self:start}
+.tag.soft{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.tag.mid{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+.tag.hard{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.lv ul{margin:0;padding-left:1.1em;display:grid;gap:4px;font-size:.95rem}
+.lv .rec{font-size:.85rem;color:var(--accent);font-weight:600}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:.93rem}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 .72rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+.arch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.arch{grid-template-columns:minmax(0,1fr)}}
+.tree{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto;font:400 .84rem/1.7 var(--f-mono);white-space:pre;margin:0;min-width:0}
+.tree b{color:var(--accent);font-weight:500}
+.stack{display:grid;gap:10px;align-content:start}
+.stack div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:.95rem}
+.stack div:last-child{border-bottom:0}
+.stack dt,.stack .k{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);padding-top:3px;text-transform:uppercase;letter-spacing:.06em}
+.phases{display:grid;gap:0;counter-reset:ph}
+.phase{display:grid;grid-template-columns:72px minmax(0,1fr);gap:18px;padding:18px 0;border-top:1px solid var(--line)}
+.phase:first-child{border-top:0}
+.phase .pn{font:600 1.9rem/1 var(--f-display);color:var(--accent);letter-spacing:-0.03em}
+.phase .pn small{display:block;font:500 .68rem var(--f-mono);color:var(--muted);letter-spacing:.08em;margin-top:6px;text-transform:uppercase}
+.phase h3{margin-bottom:6px}
+.phase ul{margin:0;padding-left:1.1em;display:grid;gap:3px;font-size:.95rem;color:var(--fg)}
+.phase .done{font-size:.85rem;color:var(--muted);margin-top:6px}
+.risks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.risks{grid-template-columns:minmax(0,1fr)}}
+.risk{border-left:3px solid var(--line);padding:4px 0 4px 16px;display:grid;gap:4px}
+.risk h3{font-size:1rem}
+.risk p{font-size:.95rem;color:var(--muted)}
+.qs{display:grid;gap:12px;margin:0;padding:0;list-style:none;counter-reset:q}
+.qs li{counter-increment:q;display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.qs li::before{content:counter(q);font:600 1.1rem var(--f-display);color:var(--accent)}
+.qs li p{font-size:.93rem;color:var(--muted);margin-top:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Plan ve arayüz taslağı · v0.1 · Android</span>
+    <h1>Sade</h1>
+    <p class="lede">Akıllı telefonu, yalnızca arama, mesaj, kamera ve galerinin açık olduğu sakin bir telefona çeviren Android ana ekranı. Ekran süresi sayacı değil; telefonun kendisini değiştiren bir mod. Hangi özelliğin ve hangi uygulamanın görüneceğine sen karar verirsin.</p>
+  </header>
+
+  <section aria-labelledby="s-proto">
+    <div class="prose">
+      <span class="eyebrow">Arayüz</span>
+      <h2 id="s-proto">Tıklanabilir prototip</h2>
+      <p class="muted">Ekranlar gerçek uygulamanın taslağıdır. Ayarlar'da bir özelliği kapatınca ana ekrandan kalkar. Kişiler, mesajlar ve fotoğraflar örnek veridir.</p>
+    </div>
+    <div class="proto">
+      <div class="phone-col">
+        <div class="phone"><div class="screen" id="screen"></div></div>
+      </div>
+      <div class="notes">
+        <div class="chips" id="chips" role="group" aria-label="Ekran seç"></div>
+        <div class="note-card" id="note" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-how">
+    <div class="prose">
+      <span class="eyebrow">Nasıl çalışır</span>
+      <h2 id="s-how">Uygulama telefonun ana ekranı olur</h2>
+      <p>Sade, Android'de <b>varsayılan başlatıcı (launcher)</b> olarak seçilir. Ana ekran tuşuna her bastığında Sade açılır ve yalnızca izin verdiğin şeyleri gösterir. Arama, mesaj, kamera ve galeri uygulamanın içinde yerleşik olarak gelir, böylece sistemin kendi uygulamalarının içindeki dikkat dağıtan bağlantılara (paylaşım, bulut, öneriler) girmezsin.</p>
+      <p>Sadece launcher olmak yeterince güçlü değil: bildirimden, son uygulamalardan ya da ayarlardan kaçış yolları var. Bu yüzden üç koruma seviyesi öneriyorum. Seviyeyi uygulamanın içinden seçersin.</p>
+    </div>
+    <div class="levels">
+      <div class="lv">
+        <span class="tag soft">Hafif</span>
+        <h3>Sadece ana ekran</h3>
+        <ul>
+          <li>Gizli uygulamalar listede görünmez.</li>
+          <li>Kurulum: Sade'yi varsayılan ana ekran yap.</li>
+          <li>Bildirimden veya ayarlardan gizli uygulamaya hâlâ ulaşılabilir.</li>
+        </ul>
+      </div>
+      <div class="lv">
+        <span class="tag mid">Orta</span>
+        <h3>Ana ekran + bekçi</h3>
+        <ul>
+          <li>Erişilebilirlik servisi ön plandaki uygulamayı izler; izinsiz bir uygulama açılırsa Sade'ye geri döner.</li>
+          <li>Bildirim dinleyici, gizli uygulamaların bildirimlerini sessizce kaldırır.</li>
+          <li>Sistem Ayarları da korunur; Wi-Fi, Bluetooth ve ses için Sade içinden kısa yollar olur.</li>
+        </ul>
+        <span class="rec">Önerilen başlangıç</span>
+      </div>
+      <div class="lv">
+        <span class="tag hard">Sıkı</span>
+        <h3>Kiosk modu</h3>
+        <ul>
+          <li>Sade, cihaz sahibi (Device Owner) olur ve Lock Task modunu açar. İzin listesindeki uygulamalar dışında hiçbir şey açılamaz; durum çubuğu ve son uygulamalar kapanır.</li>
+          <li>Kurulum bilgisayardan bir kerelik <code>adb</code> komutuyla yapılır ve telefonda hesap olmamasını ister.</li>
+          <li>Çıkış sadece Sade içinden.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-tech">
+    <div class="prose">
+      <span class="eyebrow">Teknik yapı</span>
+      <h2 id="s-tech">Kotlin ve Jetpack Compose, tek uygulama</h2>
+    </div>
+    <div class="arch">
+      <div class="stack">
+        <div><span class="k">Dil</span><span>Kotlin, tek Activity, Navigation Compose</span></div>
+        <div><span class="k">Arayüz</span><span>Jetpack Compose + Material 3, açık/koyu tema, OLED için tam siyah koyu tema</span></div>
+        <div><span class="k">Android</span><span>minSdk 26 (Android 8.0), targetSdk 36</span></div>
+        <div><span class="k">Veri</span><span>DataStore (ayarlar, izin listesi, PIN özeti); kişiler, aramalar ve SMS sistemin kendi sağlayıcılarından okunur, kopyalanmaz</span></div>
+        <div><span class="k">Kamera</span><span>CameraX (önizleme + fotoğraf + video)</span></div>
+        <div><span class="k">Galeri</span><span>MediaStore + Coil ile küçük resim yükleme</span></div>
+        <div><span class="k">Dağıtım</span><span>GitHub Actions her push'ta APK üretir; telefona doğrudan kurulur (Play Store gerekmez)</span></div>
+      </div>
+<pre class="tree" aria-label="Modül yapısı">app/
+├─ <b>launcher/</b>    ana ekran, saat, liste
+├─ <b>phone/</b>       tuş takımı, son aramalar, kişiler
+├─ <b>sms/</b>         konuşmalar, konuşma, gönderim
+├─ <b>camera/</b>      CameraX ekranı
+├─ <b>gallery/</b>     fotoğraf ızgarası, tam ekran görüntü
+├─ <b>apps/</b>        yüklü uygulamalar, izin listesi
+├─ <b>settings/</b>    modüller, koruma, PIN, bekleme
+├─ <b>guard/</b>       erişilebilirlik bekçisi,
+│              bildirim filtresi
+└─ <b>admin/</b>       Device Owner, Lock Task</pre>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>İzin / rol</th><th>Neden gerekli</th><th>Seviye</th></tr></thead>
+        <tbody>
+          <tr><td><code>HOME</code> intent filtresi</td><td>Sade'nin ana ekran olarak seçilebilmesi</td><td>Hepsi</td></tr>
+          <tr><td><code>CALL_PHONE</code>, <code>READ_CALL_LOG</code>, <code>READ_CONTACTS</code></td><td>Uygulama içinden arama yapmak, son aramaları ve kişileri göstermek</td><td>Hepsi</td></tr>
+          <tr><td><code>READ_SMS</code>, <code>SEND_SMS</code>, <code>RECEIVE_SMS</code></td><td>Konuşmaları okumak ve mesaj göndermek. Sonraki aşamada Sade varsayılan SMS uygulaması olabilir (<code>ROLE_SMS</code>)</td><td>Hepsi</td></tr>
+          <tr><td><code>CAMERA</code>, <code>RECORD_AUDIO</code></td><td>Yerleşik kamera, video sesi</td><td>Kamera açıksa</td></tr>
+          <tr><td><code>READ_MEDIA_IMAGES</code>, <code>READ_MEDIA_VIDEO</code></td><td>Yerleşik galeri</td><td>Galeri açıksa</td></tr>
+          <tr><td>Uygulama listesi sorgusu (<code>&lt;queries&gt;</code>)</td><td>Yüklü uygulamaları izin listesinde göstermek</td><td>Hepsi</td></tr>
+          <tr><td>Erişilebilirlik servisi</td><td>Ön plana gelen izinsiz uygulamayı yakalayıp ana ekrana dönmek</td><td>Orta, Sıkı</td></tr>
+          <tr><td>Bildirim dinleyici</td><td>Gizli uygulamaların bildirimlerini kaldırmak</td><td>Orta, Sıkı</td></tr>
+          <tr><td>Cihaz sahibi (Device Owner)</td><td>Lock Task kiosk modu, uygulamaları askıya alma</td><td>Sıkı</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-road">
+    <div class="prose">
+      <span class="eyebrow">Yol haritası</span>
+      <h2 id="s-road">Altı aşamada, her aşama kurulabilir bir APK</h2>
+    </div>
+    <div class="phases">
+      <div class="phase"><div class="pn">0<small>İskelet</small></div><div><h3>Proje ve derleme</h3><ul><li>Gradle + Compose projesi, tema ve tipografi</li><li>Ana ekran olarak kayıt, boş ana ekran</li><li>GitHub Actions ile APK üretimi</li></ul><p class="done">Bitti sayılır: APK telefona kurulur, ana ekran olarak seçilebilir.</p></div></div>
+      <div class="phase"><div class="pn">1<small>Çekirdek</small></div><div><h3>Ana ekran ve ayarlar</h3><ul><li>Saat, tarih, özellik listesi, izinli uygulamalar</li><li>Modülleri aç/kapa, uygulama izin listesi</li><li>Ayar kilidi: bekleme süresi + PIN</li></ul><p class="done">Bitti sayılır: bir uygulamayı izin listesine ekleyince ana ekranda görünür ve açılır.</p></div></div>
+      <div class="phase"><div class="pn">2<small>Telefon</small></div><div><h3>Arama</h3><ul><li>Tuş takımı, kişilerden numara eşleştirme</li><li>Son aramalar, kişiler, favoriler</li><li>Gelen aramalar sistemin arama ekranında kalır</li></ul></div></div>
+      <div class="phase"><div class="pn">3<small>Mesaj</small></div><div><h3>SMS</h3><ul><li>Konuşma listesi, okunmamış sayısı</li><li>Konuşma ekranı ve gönderim</li><li>Ana ekranda okunmamış rozeti</li></ul></div></div>
+      <div class="phase"><div class="pn">4<small>Medya</small></div><div><h3>Kamera ve galeri</h3><ul><li>CameraX ile fotoğraf ve video</li><li>Galeri ızgarası, tam ekran görüntüleme, silme</li></ul></div></div>
+      <div class="phase"><div class="pn">5<small>Koruma</small></div><div><h3>Orta ve sıkı seviye</h3><ul><li>Erişilebilirlik bekçisi, bildirim filtresi</li><li>Device Owner kurulumu ve Lock Task</li><li>Geçici izin: bir uygulamayı 15 dakikalığına aç</li><li>Wi-Fi, Bluetooth, ses için sistem panelleri</li></ul></div></div>
+      <div class="phase"><div class="pn">6<small>Cila</small></div><div><h3>İsteğe bağlı</h3><ul><li>Varsayılan SMS ve arama uygulaması olma</li><li>Günlük ekran süresi özeti</li><li>Alarm, fener, not gibi ek modüller</li></ul></div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-risk">
+    <div class="prose">
+      <span class="eyebrow">Sınırlar</span>
+      <h2 id="s-risk">Bilmen gerekenler</h2>
+    </div>
+    <div class="risks">
+      <div class="risk"><h3>Hafif seviyede kaçış kolay</h3><p>Android ayarlarından ana ekran değiştirilebilir. Gerçekten kısıtlamak istiyorsan Orta seviye gerekir.</p></div>
+      <div class="risk"><h3>Erişilebilirlik izni</h3><p>Android 13 ve sonrasında, Play Store dışından kurulan uygulamalarda bu izin önce "Kısıtlı ayarlara izin ver" ile açılmalı. Bir kerelik bir adım.</p></div>
+      <div class="risk"><h3>Device Owner geri dönüşü</h3><p>Sıkı seviye güçlüdür ama yanlış kurulursa telefonu sıfırlamak gerekebilir. Önce emülatörde test edeceğiz, uygulamaya temiz bir çıkış yolu koyacağız.</p></div>
+      <div class="risk"><h3>Acil arama hep açık</h3><p>Hiçbir seviye acil aramayı ve gelen aramaları engellemez. Arama modülü kapatılamaz.</p></div>
+      <div class="risk"><h3>SMS bildirimleri</h3><p>İlk sürümde gelen SMS bildirimini sistemin mesaj uygulaması gösterir; dokununca Sade'nin mesaj ekranına yönlendiririz. Tam entegrasyon için Sade'nin varsayılan SMS uygulaması olması gerekir (6. aşama).</p></div>
+      <div class="risk"><h3>MMS ve grup mesajı</h3><p>İlk sürümde yalnızca düz SMS. MMS ve grup mesajları sonraya kalır.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-q">
+    <div class="prose">
+      <span class="eyebrow">Başlamadan önce</span>
+      <h2 id="s-q">Senden beklediğim kararlar</h2>
+    </div>
+    <ol class="qs">
+      <li><div><b>Hangi koruma seviyesiyle başlayalım?</b><p>Önerim: Orta. Sıkı seviyeyi sonra ekleriz.</p></div></li>
+      <li><div><b>Telefonun modeli ve Android sürümü ne?</b><p>Samsung, Xiaomi gibi markaların ana ekran ve erişilebilirlik davranışları farklı olabiliyor.</p></div></li>
+      <li><div><b>"Sade" adı uygun mu?</b><p>Çalışma adı; istediğin zaman değiştirebiliriz.</p></div></li>
+      <li><div><b>Ek modül istiyor musun?</b><p>Alarm, fener, hesap makinesi, notlar, müzik çalar. Hepsi kapatılabilir olur.</p></div></li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function(){
+const I = {
+  back:'<svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  phone:'<svg class="ico" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+  torch:'<svg class="ico" viewBox="0 0 24 24"><path d="M8 2h8v4l-2 4v11h-4V10L8 6z"/><path d="M12 13v2"/></svg>',
+  gear:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  del:'<svg class="ico" viewBox="0 0 24 24"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M17 9l-6 6M11 9l6 6"/></svg>',
+  send:'<svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  flip:'<svg class="ico" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/></svg>',
+  close:'<svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  bolt:'<svg class="ico" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  sig:'<svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="10" width="2.5" height="4" rx=".5"/><rect x="5" y="7.5" width="2.5" height="6.5" rx=".5"/><rect x="9" y="5" width="2.5" height="9" rx=".5"/><rect x="13" y="2" width="2.5" height="12" rx=".5" opacity=".35"/></svg>',
+  bat:'<svg viewBox="0 0 24 16" style="width:22px"><rect x="1" y="2" width="19" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="3" y="4" width="13" height="8" rx="1.5" fill="currentColor"/><rect x="21" y="6" width="2" height="4" rx="1" fill="currentColor"/></svg>'
+};
+
+const S = {
+  screen:'home', tab:'keys', digits:'', thread:null, calling:null, pin:'', gate:0, toast:'', flash:false,
+  modules:{camera:true, gallery:true, torch:true, alarm:false},
+  torchOn:false, level:'orta',
+  apps:[
+    {id:'maps',name:'Haritalar',on:true},{id:'bank',name:'Banka',on:true},{id:'music',name:'Müzik',on:false},
+    {id:'mail',name:'E-posta',on:false},{id:'insta',name:'Instagram',on:false},{id:'yt',name:'YouTube',on:false}
+  ],
+  contacts:[
+    {n:'Annem',num:'0532 418 20 77'},{n:'Babam',num:'0533 902 11 46'},{n:'Deniz',num:'0541 266 30 19'},
+    {n:'Eren',num:'0505 731 88 02'},{n:'Ofis',num:'0212 444 18 18'},{n:'Selin',num:'0544 120 59 63'}
+  ],
+  recents:[
+    {n:'Annem',k:'Gelen',t:'14:05'},{n:'0216 555 01 32',k:'Cevapsız',t:'12:41',miss:true},
+    {n:'Deniz',k:'Giden',t:'Dün'},{n:'Ofis',k:'Giden',t:'Dün'},{n:'Babam',k:'Gelen',t:'Çar'}
+  ],
+  threads:[
+    {id:'anne',n:'Annem',unread:true,msgs:[{me:false,x:'Akşam yemeğe geliyor musun?',t:'13:58'}]},
+    {id:'deniz',n:'Deniz',unread:true,msgs:[{me:true,x:'Yarın boş musun?',t:'11:20'},{me:false,x:'Evet, 10’da kafede buluşalım mı?',t:'11:32'}]},
+    {id:'kargo',n:'Kargo',unread:false,msgs:[{me:false,x:'Gönderiniz dağıtıma çıktı. Takip no: 7731 0582 44',t:'09:10'}]},
+    {id:'eren',n:'Eren',unread:false,msgs:[{me:false,x:'Maç kaçta başlıyor?',t:'Dün'},{me:true,x:'21:45',t:'Dün'}]}
+  ],
+  photos:[]
+};
+const hues=[[205,40],[30,60],[140,30],[350,45],[48,70],[260,30],[180,35],[15,50],[95,40],[220,55],[320,30],[60,45],[190,25],[0,0],[120,20]];
+S.photos = hues.map(h=>({h:h[0],s:h[1]}));
+const phStyle = p => p.s===0 ? 'background:linear-gradient(160deg,#d9d9d9,#7a7a7a)' :
+  `background:linear-gradient(160deg,hsl(${p.h} ${p.s}% 78%),hsl(${(p.h+30)%360} ${p.s}% 42%))`;
+
+const NOTES = {
+  home:{t:'Ana ekran',d:'Telefonun yeni ana ekranı. İkon, renk ve rozet kalabalığı yok; sadece saat ve isimler.',
+    b:['Üstte yerleşik özellikler, altta izin verdiğin uygulamalar.','Okunmamış mesaj sayısı tek rozet olarak görünür.','Alt satırda fener, bugünkü ekran süresi ve ayarlar.'],
+    tr:'<b>Dene:</b> Ayarlar\'a gir, Kamera\'yı kapat, ana ekrana dön.'},
+  dialer:{t:'Arama',d:'Tuş takımı, son aramalar ve kişiler tek ekranda, üç sekme.',
+    b:['Numara yazarken kişilerden eşleşme gösterilir.','Arama, sistemin arama altyapısıyla yapılır; gelen arama ekranı sistemde kalır.','Bu modül kapatılamaz.'],
+    tr:'<b>Dene:</b> 0532 yaz, eşleşen kişiyi gör, yeşil tuşla ara.'},
+  calling:{t:'Arama sürüyor',d:'Giden arama sırasında sade bir ekran.',b:['Gerçek uygulamada bu ekranı sistem gösterir; Sade sadece aramayı başlatır.'],tr:'<b>Dene:</b> Kırmızı tuşla aramayı bitir.'},
+  messages:{t:'Mesajlar',d:'SMS konuşmaları. Okunmamışlar noktayla işaretli.',
+    b:['Veriler telefonun kendi SMS deposundan okunur, kopyalanmaz.','Sadece düz SMS (ilk sürüm).'],tr:'<b>Dene:</b> Deniz\'in konuşmasını aç, cevap yaz.'},
+  thread:{t:'Konuşma',d:'Tek kişiyle mesajlaşma ekranı.',b:['Gönderilen mesaj sistemin SMS deposuna da yazılır, başka bir uygulamaya geçince kaybolmaz.'],tr:'<b>Dene:</b> Bir mesaj yaz ve gönder.'},
+  camera:{t:'Kamera',d:'Uygulamanın içinde, CameraX ile. Sistemin kamerasındaki paylaşım ve bulut kısayolları yok.',
+    b:['Fotoğraf ve video.','Çekilen fotoğraf doğrudan Sade galerisine düşer.','Ayarlar\'dan tamamen kapatılabilir.'],tr:'<b>Dene:</b> Deklanşöre bas, sonra Galeri\'ye bak.'},
+  gallery:{t:'Galeri',d:'Telefondaki fotoğrafların ızgarası. Albüm, anı, öneri yok.',b:['Fotoğrafa dokununca tam ekran açılır, silinebilir.','Ayarlar\'dan kapatılabilir.'],tr:'Kameradan çektiğin fotoğraflar en başa eklenir.'},
+  gate:{t:'Ayar kilidi',d:'Ayarlara anlık bir dürtüyle girmeyi zorlaştıran kısa bir bekleme ve PIN.',
+    b:['Bekleme süresi ayarlanabilir (varsayılan 30 sn, burada 5 sn).','Sonra 4 haneli PIN. PIN telefonda yalnızca özet olarak saklanır.','"Akıllı telefona dön" için daha uzun bir bekleme olur.'],tr:'<b>Dene:</b> Süre bitince herhangi 4 rakam gir.'},
+  settings:{t:'Ayarlar',d:'Hangi özelliğin ve hangi uygulamanın açık olacağını burada seçersin.',
+    b:['Özellikler: kamera, galeri, fener, alarm.','İzinli uygulamalar: telefona yüklü her uygulama listelenir, istediğini açarsın.','Koruma seviyesi: Hafif, Orta, Sıkı.'],tr:'<b>Dene:</b> Instagram\'ı aç ya da Galeri\'yi kapat, sonra ana ekrana dön.'}
+};
+const CHIPS=[['home','Ana ekran'],['dialer','Arama'],['messages','Mesajlar'],['camera','Kamera'],['gallery','Galeri'],['gate','Ayar kilidi'],['settings','Ayarlar']];
+
+const el = document.getElementById('screen');
+const noteEl = document.getElementById('note');
+const chipsEl = document.getElementById('chips');
+let timer=null;
+
+function now(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function dateStr(){try{return new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});}catch(e){return 'Cuma, 6 Kasım';}}
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const initials = n => /^\d/.test(n)?'#':n.slice(0,1).toUpperCase();
+const bar = (title,to='home') => `<div class="bar"><button class="back" data-nav="${to}" aria-label="Geri">${I.back}</button><h3>${title}</h3></div>`;
+const sb = () => `<div class="sb"><span>${now()}</span><span class="r">${I.sig}<span>%82</span>${I.bat}</span></div>`;
+const unread = () => S.threads.filter(t=>t.unread).length;
+
+const R = {
+  home(){
+    const m=S.modules, apps=S.apps.filter(a=>a.on);
+    const items=[`<button class="h-item" data-nav="dialer">Ara</button>`,
+      `<button class="h-item" data-nav="messages">Mesajlar ${unread()?`<span class="badge">${unread()}</span>`:''}</button>`];
+    if(m.camera) items.push(`<button class="h-item" data-nav="camera">Kamera</button>`);
+    if(m.gallery) items.push(`<button class="h-item" data-nav="gallery">Galeri</button>`);
+    if(m.alarm) items.push(`<button class="h-item" data-act="noop">Alarm <span class="sub">07:30</span></button>`);
+    return `<div class="view home">
+      <div class="h-clock">${now()}</div>
+      <div class="h-date">${dateStr()}</div>
+      <div class="h-list">${items.join('')}</div>
+      ${apps.length?`<div class="h-sep">Uygulamalar</div><div class="h-list h-apps" style="margin-top:0">${apps.map(a=>`<button class="h-item" data-act="noop">${esc(a.name)}</button>`).join('')}</div>`:''}
+      <div class="h-foot">
+        ${m.torch?`<button class="round ${S.torchOn?'on':''}" data-act="torch" aria-label="Fener" aria-pressed="${S.torchOn}">${I.torch}</button>`:'<span style="width:46px"></span>'}
+        <div class="stat"><b>23 dk</b>bugün ekranda</div>
+        <button class="round" data-nav="gate" aria-label="Ayarlar">${I.gear}</button>
+      </div></div>`;
+  },
+  dialer(){
+    const tabs=`<div class="seg">${[['keys','Tuşlar'],['recent','Son'],['contacts','Kişiler']].map(([k,l])=>`<button data-act="tab" data-id="${k}" aria-pressed="${S.tab===k}">${l}</button>`).join('')}</div>`;
+    let body='';
+    if(S.tab==='keys'){
+      const d=S.digits.replace(/\s/g,'');
+      const hit=d.length>=3?S.contacts.find(c=>c.num.replace(/\s/g,'').startsWith(d)):null;
+      body=`<div class="num ${S.digits?'':'empty'}">${S.digits?esc(S.digits):'Numara gir'}</div>
+        <div class="match">${hit?esc(hit.n)+' · '+esc(hit.num):''}</div>
+        ${pad('dial')}
+        <div class="callrow"><span></span><button class="callbtn" data-act="call" aria-label="Ara">${I.phone}</button>
+        <button class="del" data-act="del" aria-label="Sil">${S.digits?I.del:''}</button></div>`;
+    } else if(S.tab==='recent'){
+      body=`<div class="rows">${S.recents.map(r=>`<button class="row" data-act="callname" data-id="${esc(r.n)}"><span class="av">${initials(r.n)}</span><span class="t"><span class="n ${r.miss?'miss':''}">${esc(r.n)}</span><span class="p ${r.miss?'miss':''}">${r.k}</span></span><span class="tm">${r.t}</span></button>`).join('')}</div>`;
+    } else {
+      let last='';
+      body=`<div class="rows">${S.contacts.map(c=>{const L=c.n[0];const h=L!==last?`<div class="letter">${L}</div>`:'';last=L;return h+`<button class="row" data-act="callname" data-id="${esc(c.n)}"><span class="av">${initials(c.n)}</span><span class="t"><span class="n">${esc(c.n)}</span><span class="p">${esc(c.num)}</span></span></button>`;}).join('')}</div>`;
+    }
+    return `${bar('Arama')}${tabs}<div class="view">${body}</div>`;
+  },
+  calling(){
+    return `<div class="view calling"><div><div class="pulse">${initials(S.calling)}</div><div class="big">${esc(S.calling)}</div><div style="color:var(--a-muted);margin-top:6px">Aranıyor…</div></div>
+      <button class="callbtn endbtn" data-act="end" aria-label="Aramayı bitir" style="transform:rotate(135deg)">${I.phone}</button></div>`;
+  },
+  messages(){
+    return `${bar('Mesajlar')}<div class="view"><div class="rows">${S.threads.map(t=>{const l=t.msgs[t.msgs.length-1];
+      return `<button class="row" data-act="thread" data-id="${t.id}"><span class="av">${initials(t.n)}</span><span class="t"><span class="n">${esc(t.n)}${t.unread?'<span class="dot"></span>':''}</span><span class="p">${l.me?'Sen: ':''}${esc(l.x)}</span></span><span class="tm">${l.t}</span></button>`;}).join('')}</div></div>`;
+  },
+  thread(){
+    const t=S.threads.find(x=>x.id===S.thread);
+    return `${bar(esc(t.n),'messages')}<div class="view thread"><span class="day">Bugün</span>${t.msgs.map(m=>`<div class="bub ${m.me?'me':''}">${esc(m.x)}<span class="bt">${m.t}</span></div>`).join('')}</div>
+      <form class="compose" data-form="send"><input id="proto-msg" autocomplete="off" placeholder="Mesaj yaz" aria-label="Mesaj"><button class="send" aria-label="Gönder">${I.send}</button></form>`;
+  },
+  camera(){
+    const p=S.photos[0];
+    return `<div class="cam-top"><button data-nav="home" aria-label="Kapat">${I.close}</button><button aria-label="Flaş" data-act="noop">${I.bolt}</button></div>
+      <div class="vf"><span class="sun"></span><span class="flash ${S.flash?'go':''}"></span>${S.toast?`<span class="toast">${S.toast}</span>`:''}</div>
+      <div class="modes"><span>VİDEO</span><span class="on">FOTOĞRAF</span></div>
+      <div class="cam-bot"><button class="thumb" data-nav="gallery" aria-label="Galeri" style="${S.modules.gallery?phStyle(p):'visibility:hidden'}"></button>
+      <button class="shutter" data-act="shutter" aria-label="Fotoğraf çek"><i></i></button>
+      <button class="flip" data-act="noop" aria-label="Kamerayı çevir">${I.flip}</button></div>`;
+  },
+  gallery(){
+    return `${bar('Galeri')}<div class="gal-head"><span>Bugün</span><span>${S.photos.length} fotoğraf</span></div>
+      <div class="view"><div class="grid">${S.photos.map((p,i)=>`<div class="ph ${p.fresh?'new':''}" style="${phStyle(p)}"></div>`).join('')}</div></div>`;
+  },
+  gate(){
+    if(S.gate>0){
+      return `${bar('Ayarlar')}<div class="view gate"><div class="ring" style="--p:${(5-S.gate)/5*100}"><span>${S.gate}</span></div>
+        <h3>Biraz bekle</h3><p>Bu değişikliği gerçekten istiyor musun? Süre dolunca PIN sorulur.</p></div>`;
+    }
+    return `${bar('Ayarlar')}<div class="view gate" style="padding-top:18px"><h3>PIN gir</h3><p>Ayarları açmak için 4 haneli PIN.</p>
+      <div class="pins">${[0,1,2,3].map(i=>`<i class="${i<S.pin.length?'f':''}"></i>`).join('')}</div>${pad('pin')}</div>`;
+  },
+  settings(){
+    const sw=(on,act,id)=>`<button class="sw" role="switch" aria-checked="${on}" data-act="${act}" data-id="${id}" aria-label="${id}"></button>`;
+    const mods=[['camera','Kamera','Uygulama içi kamera'],['gallery','Galeri','Fotoğraflar ve videolar'],['torch','Fener','Ana ekranda kısa yol'],['alarm','Alarm','Ana ekranda bir sonraki alarm']];
+    const lv={hafif:'Sadece ana ekran. Gizli uygulamalara ayarlardan ulaşılabilir.',orta:'Ana ekran + bekçi. İzinsiz bir uygulama açılırsa Sade\'ye dönülür, bildirimleri gizlenir.',siki:'Kiosk modu. İzin listesi dışında hiçbir şey açılamaz. Bilgisayarla bir kerelik kurulum ister.'};
+    return `${bar('Ayarlar')}<div class="view set">
+      <div class="grp-l">Her zaman açık</div>
+      <div class="grp"><div class="srow"><span class="t">Arama ve Mesajlar<span class="s">Kapatılamaz; acil arama hep çalışır</span></span></div></div>
+      <div class="grp-l">Özellikler</div>
+      <div class="grp">${mods.map(([k,l,s])=>`<div class="srow"><span class="t">${l}<span class="s">${s}</span></span>${sw(S.modules[k],'mod',k)}</div>`).join('')}</div>
+      <div class="grp-l">İzin verilen uygulamalar</div>
+      <div class="grp">${S.apps.map(a=>`<div class="srow"><span class="av" style="width:32px;height:32px;font-size:12px;background:var(--a-bg)">${initials(a.name)}</span><span class="t">${esc(a.name)}</span>${sw(a.on,'app',a.id)}</div>`).join('')}
+        <button class="srow" data-act="noop"><span class="t" style="color:var(--a-accent);font-weight:600">Tüm uygulamaları göster</span><span class="chev">›</span></button></div>
+      <div class="grp-l">Koruma seviyesi</div>
+      <div class="grp"><div class="lvl">${[['hafif','Hafif'],['orta','Orta'],['siki','Sıkı']].map(([k,l])=>`<button data-act="level" data-id="${k}" aria-pressed="${S.level===k}">${l}</button>`).join('')}</div><div class="lvl-d">${lv[S.level]}</div></div>
+      <div class="grp-l">Bağlantı</div>
+      <div class="grp">${['Wi-Fi','Bluetooth','Ses ve titreşim'].map(x=>`<button class="srow" data-act="noop"><span class="t">${x}<span class="s">Sistem paneli açılır</span></span><span class="chev">›</span></button>`).join('')}</div>
+      <div class="grp-l">Kilit</div>
+      <div class="grp"><button class="srow" data-act="noop"><span class="t">Bekleme süresi<span class="s">Ayarları açmadan önce</span></span><span class="s" style="color:var(--a-muted)">30 sn</span></button>
+        <button class="srow" data-act="noop"><span class="t">PIN'i değiştir</span><span class="chev">›</span></button>
+        <button class="srow" data-act="noop"><span class="t danger">Akıllı telefona dön<span class="s">10 dk bekleme + PIN</span></span><span class="chev">›</span></button></div>
+    </div>`;
+  }
+};
+function pad(mode){
+  const k=[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']];
+  return `<div class="pad">${k.map(([n,l])=>`<button class="key" data-key="${n}" data-mode="${mode}">${n}${l?`<small>${l}</small>`:''}</button>`).join('')}</div>`;
+}
+function fmt(d){const s=d.replace(/\D/g,'');return [s.slice(0,4),s.slice(4,7),s.slice(7,9),s.slice(9,11)].filter(Boolean).join(' ');}
+
+function render(){
+  const cam = S.screen==='camera';
+  el.className='screen'+(cam?' cam':'');
+  el.innerHTML = sb() + (cam?`<div class="view" style="overflow:hidden">${R.camera()}</div>`:R[S.screen]()) + `<div class="homebar"><button data-nav="home" aria-label="Ana ekran"></button></div>`;
+  const key = S.screen;
+  const n=NOTES[key];
+  noteEl.innerHTML=`<span class="eyebrow">Ekran</span><h3 style="font-size:1.4rem">${n.t}</h3><p>${n.d}</p><ul>${n.b.map(x=>`<li>${x}</li>`).join('')}</ul><p class="try">${n.tr}</p>`;
+  const active = key==='thread'?'messages':key==='calling'?'dialer':key;
+  chipsEl.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.nav===active));
+}
+function go(to){
+  clearInterval(timer);
+  if(to==='camera'&&!S.modules.camera) to='home';
+  if(to==='gallery'&&!S.modules.gallery) to='home';
+  S.screen=to; S.toast=''; S.flash=false;
+  if(to==='gate'){S.gate=5;S.pin='';timer=setInterval(()=>{S.gate--; if(S.gate<=0)clearInterval(timer); if(S.screen==='gate')render();},1000);}
+  if(to==='dialer'){S.digits='';}
+  render();
+}
+CHIPS.forEach(([k,l])=>{const b=document.createElement('button');b.className='chip';b.type='button';b.dataset.nav=k;b.textContent=l;b.addEventListener('click',()=>{
+  if(k==='camera')S.modules.camera=true; if(k==='gallery')S.modules.gallery=true; go(k);});chipsEl.appendChild(b);});
+
+el.addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t||!el.contains(t)) return;
+  if(t.dataset.nav){go(t.dataset.nav);return;}
+  if(t.dataset.key){
+    if(t.dataset.mode==='dial'){ if(S.digits.replace(/\D/g,'').length<11 || /[*#]/.test(t.dataset.key)) S.digits = /[*#]/.test(t.dataset.key)? S.digits+t.dataset.key : fmt(S.digits.replace(/[^\d]/g,'')+t.dataset.key); render(); }
+    else { S.pin+=t.dataset.key; render(); if(S.pin.length>=4) setTimeout(()=>{S.screen='settings';render();},220); }
+    return;
+  }
+  const a=t.dataset.act, id=t.dataset.id;
+  if(a==='torch'){S.torchOn=!S.torchOn;render();}
+  else if(a==='tab'){S.tab=id;render();}
+  else if(a==='del'){const s=S.digits.replace(/\D/g,'').slice(0,-1);S.digits=fmt(s);render();}
+  else if(a==='call'){ if(!S.digits) return; const d=S.digits.replace(/\s/g,''); const c=S.contacts.find(c=>c.num.replace(/\s/g,'')===d); S.calling=c?c.n:S.digits; S.screen='calling'; render(); }
+  else if(a==='callname'){S.calling=id;S.screen='calling';render();}
+  else if(a==='end'){S.screen='dialer';render();}
+  else if(a==='thread'){S.thread=id;const th=S.threads.find(x=>x.id===id);th.unread=false;S.screen='thread';render();}
+  else if(a==='shutter'){
+    const h=Math.floor(Math.random()*360); S.photos.forEach(p=>p.fresh=false); S.photos.unshift({h,s:40,fresh:true});
+    S.flash=true; S.toast='Galeri\'ye kaydedildi'; render(); setTimeout(()=>{S.flash=false;},400);
+    setTimeout(()=>{if(S.screen==='camera'){S.toast='';render();}},1600);
+  }
+  else if(a==='mod'){S.modules[id]=!S.modules[id]; if(id==='torch'&&!S.modules.torch)S.torchOn=false; render();}
+  else if(a==='app'){const ap=S.apps.find(x=>x.id===id);ap.on=!ap.on;render();}
+  else if(a==='level'){S.level=id;render();}
+});
+el.addEventListener('submit',e=>{
+  e.preventDefault();
+  const inp=el.querySelector('#proto-msg'); const v=(inp&&inp.value||'').trim(); if(!v) return;
+  const th=S.threads.find(x=>x.id===S.thread); th.msgs.push({me:true,x:v,t:now()}); render();
+  const v2=el.querySelector('.view.thread'); if(v2) v2.scrollTop=v2.scrollHeight;
+  const ni=el.querySelector('#proto-msg'); if(ni) ni.focus();
+});
+setInterval(()=>{ if(S.screen==='home') { const c=el.querySelector('.h-clock'); if(c) c.textContent=now(); } },15000);
+render();
+})();
+</script>
