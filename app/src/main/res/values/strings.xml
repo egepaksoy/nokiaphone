@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">KISS</string>
     <string name="admin_description">Sıkı mod: telefonu yalnızca izin verdiğin özelliklerle sınırlar.</string>
+    <string name="lock_service_label">KISS ekran kilidi</string>
+    <string name="lock_service_description">Ana ekranda iki kez dokununca ekranı kilitler, parmak izi ve yüz tanıma çalışmaya devam eder. Ekran içeriğini okumaz.</string>
 </resources>

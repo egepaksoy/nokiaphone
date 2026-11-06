@@ -41,5 +41,6 @@ object KIcons {
     val Search = stroke("search", "M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14z", "M20 20l-4-4")
     val Chevron = stroke("chev", "M9 5l7 7-7 7")
     val Check = stroke("check", "M5 12l5 5 9-10")
+    val Alarm = stroke("alarm", "M12 6a7 7 0 1 0 0 14a7 7 0 1 0 0-14z", "M12 10v3.5l2 1.5", "M4 5l3-2", "M20 5l-3-2")
     val Lock = stroke("lock", "M6 11h12v9H6z", "M8 11V8a4 4 0 0 1 8 0v3")
 }

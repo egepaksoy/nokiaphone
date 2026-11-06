@@ -54,7 +54,7 @@ fun KissRoot() {
             Screen.Calculator -> CalculatorScreen(nav)
             Screen.Gate -> GateScreen(s, nav)
             Screen.Settings -> SettingsScreen(s, nav)
-            is Screen.AppPicker -> AppPickerScreen(s, screen.notes, nav)
+            is Screen.AppPicker -> AppPickerScreen(s, screen.mode, nav)
             Screen.Strict -> StrictScreen(s, nav)
             Screen.ChangePin -> ChangePinScreen(nav)
             is Screen.Countdown -> CountdownScreen(screen.action, nav)

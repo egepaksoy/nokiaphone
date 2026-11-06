@@ -59,6 +59,9 @@ Modüller: `launcher`, `phone`, `sms`, `camera`, `gallery`, `apps`, `settings`, 
 - [x] Kamera (CameraX, fotoğraf), galeri (görüntüleme, silme)
 - [x] Hesap makinesi, fener, alarm, notlar
 - [x] Sıkı mod: Device Owner, Lock Task, askıya alma, geçici sistem ayarı erişimi, acil çıkış
+- [x] v0.2: Mesajlar'da SMS / WhatsApp seçimi (mesaj uygulamaları ayarlanabilir)
+- [x] v0.2: Saate dokununca Saat uygulaması; sıradaki alarm tarihin yanında
+- [x] v0.2: Boş alana çift dokunarak ekran kilidi
 - [ ] Video çekimi
 - [ ] Varsayılan SMS uygulaması olma (MMS dahil)
 - [ ] Gerçek cihazda Samsung testleri

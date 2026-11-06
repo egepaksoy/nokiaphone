@@ -14,11 +14,13 @@ sealed interface Screen {
     data object Calculator : Screen
     data object Gate : Screen
     data object Settings : Screen
-    data class AppPicker(val notes: Boolean) : Screen
+    data class AppPicker(val mode: PickerMode) : Screen
     data object Strict : Screen
     data object ChangePin : Screen
     data class Countdown(val action: CountdownAction) : Screen
 }
+
+enum class PickerMode { Allowed, Notes, Messaging }
 
 enum class CountdownAction { ExitStrict, RemoveOwner }
 

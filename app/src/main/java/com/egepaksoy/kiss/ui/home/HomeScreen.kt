@@ -1,6 +1,13 @@
 package com.egepaksoy.kiss.ui.home
 
+import android.app.Activity
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.ui.input.pointer.pointerInput
+import com.egepaksoy.kiss.lock.ScreenLock
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +48,7 @@ import com.egepaksoy.kiss.data.Apps
 import com.egepaksoy.kiss.data.KissSettings
 import com.egepaksoy.kiss.data.Sms
 import com.egepaksoy.kiss.ui.Navigator
+import com.egepaksoy.kiss.ui.PickerMode
 import com.egepaksoy.kiss.ui.Screen
 import com.egepaksoy.kiss.ui.common.KIcons
 import com.egepaksoy.kiss.ui.common.RoundBtn
@@ -73,32 +81,69 @@ fun HomeScreen(s: KissSettings, nav: Navigator) {
         Sms.changes(ctx).collect { value = withContext(Dispatchers.IO) { Sms.unreadCount(ctx) } }
     }
     val nextAlarm = remember(tick, now.minute) { if (s.alarm) Alarm.next(ctx) else null }
-    val apps by produceState(emptyList(), s.allowedApps, tick) {
-        value = withContext(Dispatchers.IO) { Apps.entries(ctx, s.allowedApps) }
+    val apps by produceState(emptyList(), s.allowedApps, s.messagingApps, tick) {
+        value = withContext(Dispatchers.IO) { Apps.entries(ctx, s.allowedApps - s.messagingApps) }
     }
+    val messengers by produceState(emptyList(), s.messagingApps, tick) {
+        value = withContext(Dispatchers.IO) { Apps.entries(ctx, s.messagingApps) }
+    }
+    var messagesOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(tick) { messagesOpen = false }
 
-    Column(Modifier.fillMaxSize().systemBarsPadding().padding(start = 28.dp, end = 20.dp, top = 28.dp, bottom = 16.dp)) {
-        Text(
-            now.format(DateTimeFormatter.ofPattern("HH:mm")),
-            fontFamily = Display, fontWeight = FontWeight.Medium, fontSize = 80.sp, lineHeight = 80.sp,
-            letterSpacing = (-0.045).em,
-        )
-        Text(
-            now.format(DateTimeFormatter.ofPattern("d MMMM EEEE", Locale.forLanguageTag("tr"))),
-            color = c.muted, fontSize = 16.sp, modifier = Modifier.padding(top = 6.dp, start = 2.dp),
-        )
+    Column(
+        Modifier.fillMaxSize()
+            // Boş bir yere iki kez dokun: ekranı kilitle
+            .pointerInput(s.doubleTapLock) {
+                if (s.doubleTapLock) detectTapGestures(onDoubleTap = {
+                    (ctx as? Activity)?.let { ScreenLock.lock(it) }
+                })
+            }
+            .systemBarsPadding().padding(start = 28.dp, end = 20.dp, top = 28.dp, bottom = 16.dp),
+    ) {
+        // Saate dokun: Saat uygulaması (alarmlar orada ayarlanır)
+        Column(
+            Modifier.clip(RoundedCornerShape(16.dp))
+                .then(if (s.alarm) Modifier.clickable { Alarm.open(ctx) } else Modifier)
+                .padding(end = 12.dp, bottom = 4.dp),
+        ) {
+            Text(
+                now.format(DateTimeFormatter.ofPattern("HH:mm")),
+                fontFamily = Display, fontWeight = FontWeight.Medium, fontSize = 80.sp, lineHeight = 80.sp,
+                letterSpacing = (-0.045).em,
+            )
+            Row(Modifier.padding(top = 6.dp, start = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    now.format(DateTimeFormatter.ofPattern("d MMMM EEEE", Locale.forLanguageTag("tr"))),
+                    color = c.muted, fontSize = 16.sp,
+                )
+                if (nextAlarm != null) {
+                    Text("  ·  ", color = c.muted, fontSize = 16.sp)
+                    Icon(KIcons.Alarm, null, tint = c.muted, modifier = Modifier.size(15.dp))
+                    Text(" $nextAlarm", color = c.muted, fontSize = 16.sp)
+                }
+            }
+        }
 
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = 36.dp)) {
             HomeItem("Ara") { nav.push(Screen.Dialer) }
-            HomeItem("Mesajlar", badge = unread) { nav.push(Screen.Messages) }
+            HomeItem("Mesajlar", badge = unread) {
+                if (messengers.isEmpty()) nav.push(Screen.Messages) else messagesOpen = !messagesOpen
+            }
+            AnimatedVisibility(messagesOpen && messengers.isNotEmpty()) {
+                Column(Modifier.padding(start = 18.dp, bottom = 6.dp)) {
+                    HomeItem("SMS", badge = unread, size = 22.sp) { messagesOpen = false; nav.push(Screen.Messages) }
+                    messengers.forEach { m ->
+                        HomeItem(m.label, size = 22.sp) { messagesOpen = false; Apps.launch(ctx, m.pkg) }
+                    }
+                }
+            }
             if (s.camera) HomeItem("Kamera") { nav.push(Screen.Camera) }
             if (s.gallery) HomeItem("Galeri") { nav.push(Screen.Gallery) }
             if (s.notes) HomeItem("Notlar") {
                 val pkg = s.notesPackage
-                if (pkg != null) Apps.launch(ctx, pkg) else nav.push(Screen.AppPicker(notes = true))
+                if (pkg != null) Apps.launch(ctx, pkg) else nav.push(Screen.AppPicker(PickerMode.Notes))
             }
             if (s.calculator) HomeItem("Hesap makinesi") { nav.push(Screen.Calculator) }
-            if (s.alarm) HomeItem("Alarm", sub = nextAlarm) { Alarm.open(ctx) }
 
             if (apps.isNotEmpty()) {
                 Row(Modifier.padding(top = 22.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {

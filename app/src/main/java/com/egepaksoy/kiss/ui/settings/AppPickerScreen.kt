@@ -23,6 +23,7 @@ import com.egepaksoy.kiss.data.AppEntry
 import com.egepaksoy.kiss.data.Apps
 import com.egepaksoy.kiss.data.KissSettings
 import com.egepaksoy.kiss.ui.Navigator
+import com.egepaksoy.kiss.ui.PickerMode
 import com.egepaksoy.kiss.ui.common.TopBar
 import com.egepaksoy.kiss.ui.phone.SearchField
 import com.egepaksoy.kiss.ui.theme.Kiss
@@ -30,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun AppPickerScreen(s: KissSettings, notes: Boolean, nav: Navigator) {
+fun AppPickerScreen(s: KissSettings, mode: PickerMode, nav: Navigator) {
     val ctx = LocalContext.current
     val store = KissApp.instance.settings
     var q by rememberSaveable { mutableStateOf("") }
@@ -39,23 +40,26 @@ fun AppPickerScreen(s: KissSettings, notes: Boolean, nav: Navigator) {
         val list = all ?: emptyList()
         if (q.isBlank()) list else list.filter { it.label.contains(q.trim(), ignoreCase = true) }
     }
+    val (title, hint) = when (mode) {
+        PickerMode.Notes -> "Not uygulaması" to "Ana ekrandaki \"Notlar\" bu uygulamayı açar."
+        PickerMode.Messaging -> "Mesaj uygulamaları" to "Mesajlar'a dokununca SMS'in yanında bu uygulamalar da sunulur."
+        PickerMode.Allowed -> "İzin verilen uygulamalar" to "Açtığın uygulamalar ana ekranda görünür ve sıkı modda kullanılabilir."
+    }
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
-        TopBar(if (notes) "Not uygulaması" else "İzin verilen uygulamalar", { nav.pop() })
-        Text(
-            if (notes) "Ana ekrandaki \"Notlar\" bu uygulamayı açar."
-            else "Açtığın uygulamalar ana ekranda görünür ve sıkı modda kullanılabilir.",
-            color = Kiss.colors.muted, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp),
-        )
+        TopBar(title, { nav.pop() })
+        Text(hint, color = Kiss.colors.muted, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp))
         SearchField(q, "Uygulama ara") { q = it }
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 6.dp)) {
             items(filtered, key = { it.pkg }) { a ->
-                if (notes) {
-                    AppRow(a, s.notesPackage == a.pkg, single = true) {
+                when (mode) {
+                    PickerMode.Notes -> AppRow(a, s.notesPackage == a.pkg, single = true) {
                         store.update { it.copy(notesPackage = a.pkg, notes = true) }
                         nav.pop()
                     }
-                } else {
-                    AppRow(a, a.pkg in s.allowedApps) { v ->
+                    PickerMode.Messaging -> AppRow(a, a.pkg in s.messagingApps) { v ->
+                        store.update { it.copy(messagingApps = if (v) it.messagingApps + a.pkg else it.messagingApps - a.pkg) }
+                    }
+                    PickerMode.Allowed -> AppRow(a, a.pkg in s.allowedApps) { v ->
                         store.update { it.copy(allowedApps = if (v) it.allowedApps + a.pkg else it.allowedApps - a.pkg) }
                     }
                 }

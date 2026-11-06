@@ -117,6 +117,7 @@ object Policy {
         val set = essentialPackages(ctx).toMutableSet()
         set += s.allowedApps
         if (s.notes) s.notesPackage?.let(set::add)
+        set += s.messagingApps
         set += KissApp.instance.settings.temporaryPackages
         return set
     }

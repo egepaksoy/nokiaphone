@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -31,7 +32,9 @@ import com.egepaksoy.kiss.data.Apps
 import com.egepaksoy.kiss.data.KissSettings
 import com.egepaksoy.kiss.policy.Policy
 import com.egepaksoy.kiss.ui.Navigator
+import com.egepaksoy.kiss.ui.PickerMode
 import com.egepaksoy.kiss.ui.Screen
+import com.egepaksoy.kiss.lock.ScreenLock
 import com.egepaksoy.kiss.ui.common.Chevron
 import com.egepaksoy.kiss.ui.common.Divider
 import com.egepaksoy.kiss.ui.common.Group
@@ -57,6 +60,11 @@ fun SettingsScreen(s: KissSettings, nav: Navigator) {
         value = withContext(Dispatchers.IO) { Apps.entries(ctx, s.allowedApps) }
     }
     val notesLabel = remember(s.notesPackage) { s.notesPackage?.let { Apps.label(ctx, it) } }
+    val messengers by produceState(emptyList<AppEntry>(), s.messagingApps) {
+        value = withContext(Dispatchers.IO) { Apps.entries(ctx, s.messagingApps) }
+    }
+    val tick by KissApp.instance.resumeTick.collectAsState()
+    val lockService = remember(tick) { ScreenLock.serviceEnabled() }
 
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         TopBar("Ayarlar", { nav.pop() })
@@ -86,7 +94,7 @@ fun SettingsScreen(s: KissSettings, nav: Navigator) {
                 Divider()
                 Toggle("Fener", "Ana ekranda kısa yol", s.torch) { v -> store.update { it.copy(torch = v) } }
                 Divider()
-                Toggle("Alarm", "Saat uygulamasını açar, sıradaki alarmı gösterir", s.alarm) { v -> store.update { it.copy(alarm = v) } }
+                Toggle("Alarm", "Saate dokununca Saat uygulaması açılır, sıradaki alarm tarihin yanında görünür", s.alarm) { v -> store.update { it.copy(alarm = v) } }
                 Divider()
                 Toggle("Hesap makinesi", null, s.calculator) { v -> store.update { it.copy(calculator = v) } }
                 Divider()
@@ -95,7 +103,40 @@ fun SettingsScreen(s: KissSettings, nav: Navigator) {
                     Divider()
                     GroupRow(
                         "Not uygulaması", notesLabel ?: "Seçilmedi",
-                        onClick = { nav.push(Screen.AppPicker(notes = true)) },
+                        onClick = { nav.push(Screen.AppPicker(PickerMode.Notes)) },
+                        trailing = { Chevron() },
+                    )
+                }
+            }
+
+            SectionLabel("Mesajlar")
+            Group {
+                GroupRow("SMS", "Yerleşik, her zaman açık")
+                messengers.forEach { a ->
+                    Divider()
+                    AppRow(a, true) { v -> if (!v) store.update { it.copy(messagingApps = it.messagingApps - a.pkg) } }
+                }
+                Divider()
+                GroupRow(
+                    "Mesaj uygulaması ekle", "Ör. WhatsApp. Mesajlar'a dokununca seçim sunulur.",
+                    titleColor = c.accent,
+                    onClick = { nav.push(Screen.AppPicker(PickerMode.Messaging)) },
+                    trailing = { Chevron() },
+                )
+            }
+
+            SectionLabel("Ekran kilidi")
+            Group {
+                Toggle("Çift dokunarak kilitle", "Ana ekranda boş bir yere iki kez dokun", s.doubleTapLock) { v ->
+                    store.update { it.copy(doubleTapLock = v) }
+                }
+                if (s.doubleTapLock) {
+                    Divider()
+                    GroupRow(
+                        "Parmak izi ile açma",
+                        if (lockService) "Açık · KISS ekran kilidi servisi çalışıyor"
+                        else "Kapalı · kilitledikten sonra PIN gerekir. Açmak için Erişilebilirlik > KISS ekran kilidi",
+                        onClick = { Policy.openTemporarily(ctx, ScreenLock.accessibilitySettings()) },
                         trailing = { Chevron() },
                     )
                 }
@@ -111,7 +152,7 @@ fun SettingsScreen(s: KissSettings, nav: Navigator) {
                     if (allowed.isEmpty()) "Uygulama ekle" else "Uygulamaları düzenle",
                     "Telefondaki her uygulama listelenir",
                     titleColor = c.accent,
-                    onClick = { nav.push(Screen.AppPicker(notes = false)) },
+                    onClick = { nav.push(Screen.AppPicker(PickerMode.Allowed)) },
                     trailing = { Chevron() },
                 )
             }

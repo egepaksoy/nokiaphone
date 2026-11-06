@@ -13,6 +13,9 @@ data class KissSettings(
     val calculator: Boolean = true,
     val notes: Boolean = true,
     val notesPackage: String? = null,
+    /** Mesajlar'a dokununca SMS'in yanında sunulan uygulamalar (ör. WhatsApp). */
+    val messagingApps: Set<String> = emptySet(),
+    val doubleTapLock: Boolean = true,
     val allowedApps: Set<String> = emptySet(),
     val strict: Boolean = false,
     val notificationPanel: Boolean = true,
@@ -25,6 +28,15 @@ data class KissSettings(
 class SettingsStore(context: Context) {
     private val prefs = context.getSharedPreferences("kiss", Context.MODE_PRIVATE)
     private val internal = context.getSharedPreferences("kiss_internal", Context.MODE_PRIVATE)
+
+    init {
+        // İlk açılışta WhatsApp yüklüyse mesaj seçeneklerine ekle.
+        if (!prefs.contains("messagingApps")) {
+            val pm = context.packageManager
+            val found = DEFAULT_MESSAGING.filter { runCatching { pm.getPackageInfo(it, 0) }.isSuccess }.toSet()
+            prefs.edit().putStringSet("messagingApps", found).commit()
+        }
+    }
     private val _state = MutableStateFlow(read())
     val state: StateFlow<KissSettings> = _state.asStateFlow()
     val value: KissSettings get() = _state.value
@@ -44,6 +56,8 @@ class SettingsStore(context: Context) {
         calculator = prefs.getBoolean("calculator", true),
         notes = prefs.getBoolean("notes", true),
         notesPackage = prefs.getString("notesPackage", null),
+        messagingApps = prefs.getStringSet("messagingApps", emptySet())!!.toSet(),
+        doubleTapLock = prefs.getBoolean("doubleTapLock", true),
         allowedApps = prefs.getStringSet("allowedApps", emptySet())!!.toSet(),
         strict = prefs.getBoolean("strict", false),
         notificationPanel = prefs.getBoolean("notificationPanel", true),
@@ -62,6 +76,8 @@ class SettingsStore(context: Context) {
             .putBoolean("calculator", s.calculator)
             .putBoolean("notes", s.notes)
             .putString("notesPackage", s.notesPackage)
+            .putStringSet("messagingApps", s.messagingApps)
+            .putBoolean("doubleTapLock", s.doubleTapLock)
             .putStringSet("allowedApps", s.allowedApps)
             .putBoolean("strict", s.strict)
             .putBoolean("notificationPanel", s.notificationPanel)
@@ -80,6 +96,10 @@ class SettingsStore(context: Context) {
     var temporaryPackages: Set<String>
         get() = internal.getStringSet("temporary", emptySet())!!.toSet()
         set(v) { internal.edit().putStringSet("temporary", v).commit() }
+
+    companion object {
+        val DEFAULT_MESSAGING = listOf("com.whatsapp", "com.whatsapp.w4b")
+    }
 
     fun threadSeen(threadId: Long): Long = internal.getLong("seen_$threadId", 0L)
     fun markThreadSeen(threadId: Long) {
